@@ -148,6 +148,7 @@ html {
     font-size: 15px;
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
 }
 
 body {
@@ -157,6 +158,8 @@ body {
     line-height: 1.6;
     transition: background var(--transition), color var(--transition);
     min-height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 /* ─── NAVBAR ─────────────────────────────────────────────────────────────────── */
@@ -394,6 +397,7 @@ body {
     display: flex;
     min-height: 100vh;
     background: var(--bg-base);
+    overflow-x: hidden;
 }
 
 .app-sidebar {
@@ -423,6 +427,7 @@ body {
     margin-left: var(--side-nav-width-full);
     min-width: 0;
     transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-x: hidden;
 }
 
 .app-shell.collapsed .app-main {
@@ -621,6 +626,7 @@ body {
     padding: 2.5rem;
     min-height: calc(100vh - 64px);
     position: relative;
+    overflow-x: hidden;
 }
 
 /* Decorative background circles */
@@ -1336,7 +1342,7 @@ body {
     position: fixed;
     inset: 0;
     background: var(--bg-overlay);
-    z-index: 500;
+    z-index: 2000;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1764,6 +1770,9 @@ body {
     .app-shell-active .app-main {
         margin-left: 0 !important;
         padding-top: 56px;
+        min-height: calc(100vh - 56px);
+        display: flex;
+        flex-direction: column;
     }
 
     /* Sidebar: hidden off-screen, slides in */
@@ -1825,9 +1834,12 @@ body {
 
     /* ─── Calendar Redesign ─── */
     .calendar-redesign-wrapper {
-        padding: 1rem 0.75rem;
-        margin: -1rem -0.75rem;
+        padding: 1rem 0.75rem 4rem 0.75rem; /* Extra bottom padding */
+        margin: 0; /* Remove negative margins that cause jiggle */
         min-height: calc(100vh - 56px);
+        width: 100%;
+        box-sizing: border-box;
+        overflow-x: hidden;
     }
 
     .calendar-container {
@@ -1928,6 +1940,7 @@ body {
 
     /* ─── Auth ─── */
     .auth-card { padding: 1.75rem 1.25rem; }
+    .auth-logo-img { height: 42px; }
     .demo-accounts { flex-direction: column; }
 
     /* ─── Agenda (Horizontal on mobile) ─── */

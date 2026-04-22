@@ -33,8 +33,7 @@
             <i class="fa-solid fa-bars"></i>
         </button>
         <div class="mobile-topbar-brand">
-            <img src="{{ asset('images/logobaru.png') }}" alt="Logo" style="height: 26px;">
-            <span>{{ config('app.name', 'Kalender') }}</span>
+            <img src="{{ asset('images/logobaru.png') }}" alt="Logo" style="height: 30px;">
         </div>
         <button class="theme-toggle mobile-theme-btn" id="themeToggleMobile" title="Toggle Dark Mode">
             <i class="fa-solid fa-sun" id="themeIconLightMobile"></i>
@@ -109,6 +108,7 @@
 <div class="app-shell app-shell-none">
     <div class="app-main">
         <!-- ─── NAVBAR (Guests Only) ──────────────────────────────────────────────── -->
+        @if(!request()->routeIs('login'))
         <nav class="navbar" id="navbar">
             <div class="navbar-container">
                 <a href="{{ route('home') }}" class="navbar-brand">
@@ -126,6 +126,7 @@
                 </div>
             </div>
         </nav>
+        @endif
 @endauth
 
     <!-- ─── FLASH MESSAGES ──────────────────────────────────────────────────────── -->
