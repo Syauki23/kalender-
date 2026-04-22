@@ -1658,37 +1658,353 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
+/* ─── MOBILE TOP BAR ─────────────────────────────────────────────────────────── */
+.mobile-topbar {
+    display: none; /* Hidden on desktop */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    height: 56px;
+    background: var(--side-nav-bg);
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.2);
+}
+
+.mobile-hamburger {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    transition: all 0.2s;
+}
+.mobile-hamburger:hover,
+.mobile-hamburger:active {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+.mobile-topbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+.mobile-topbar-brand span {
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: #fff;
+    letter-spacing: -0.3px;
+}
+
+.mobile-theme-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+.mobile-theme-btn:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: #fff !important;
+}
+
+/* ─── MOBILE SIDEBAR OVERLAY ─────────────────────────────────────────────────── */
+.mobile-sidebar-overlay {
+    display: none; /* Hidden on desktop */
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1050;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    backdrop-filter: blur(4px);
+}
+.mobile-sidebar-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
 /* ─── RESPONSIVE ──────────────────────────────────────────────────────────────── */
+
+/* ─── Tablet (≤ 1024px) ──────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+    .calendar-container {
+        grid-template-columns: 260px 1fr;
+        gap: 1.5rem;
+    }
+    .calendar-redesign-wrapper {
+        padding: 1.5rem;
+    }
+    .cal-month { font-size: 3rem; }
+}
+
+/* ─── Mobile (≤ 768px) ───────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-    .main-content { padding: 1rem 0.75rem; }
+    /* Show mobile top bar */
+    .mobile-topbar {
+        display: flex;
+    }
+    .mobile-sidebar-overlay {
+        display: block;
+    }
+
+    /* Push content below mobile top bar */
+    .app-shell-active .app-main {
+        margin-left: 0 !important;
+        padding-top: 56px;
+    }
+
+    /* Sidebar: hidden off-screen, slides in */
+    .app-sidebar {
+        width: var(--side-nav-width-full) !important;
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        z-index: 1100 !important;
+        padding: 1.5rem !important;
+    }
+    .app-sidebar.mobile-open {
+        transform: translateX(0);
+    }
+
+    /* Override desktop collapsed state on mobile */
+    .app-shell.collapsed .app-sidebar {
+        width: var(--side-nav-width-full) !important;
+        transform: translateX(-100%);
+        padding: 1.5rem !important;
+    }
+    .app-shell.collapsed .app-sidebar.mobile-open {
+        transform: translateX(0);
+    }
+    .app-shell.collapsed .app-main {
+        margin-left: 0 !important;
+    }
+
+    /* Restore collapsed hidden items on mobile when sidebar is open */
+    .app-shell.collapsed .app-sidebar.mobile-open .app-sidebar-link span,
+    .app-shell.collapsed .app-sidebar.mobile-open .app-sidebar-user-info,
+    .app-shell.collapsed .app-sidebar.mobile-open .app-sidebar-logo span,
+    .app-shell.collapsed .app-sidebar.mobile-open .brand-text,
+    .app-shell.collapsed .app-sidebar.mobile-open .theme-label,
+    .app-shell.collapsed .app-sidebar.mobile-open .logout-label {
+        display: inline !important;
+    }
+    .app-shell.collapsed .app-sidebar.mobile-open .app-sidebar-link {
+        justify-content: flex-start !important;
+        padding: 0.85rem 1.15rem !important;
+    }
+
+    /* Hide desktop sidebar toggle on mobile */
+    #sidebarToggle {
+        display: none !important;
+    }
+
+    /* ─── Main Content ─── */
+    .main-content {
+        padding: 1rem 0.75rem;
+    }
+
+    /* ─── Navbar (Guest) ─── */
     .navbar-container { padding: 0 1rem; }
     .navbar-links { display: none; }
 
+    /* ─── Page Header ─── */
     .page-header-inner { flex-direction: column; align-items: flex-start; }
     .page-header-actions { width: 100%; }
 
+    /* ─── Calendar Redesign ─── */
+    .calendar-redesign-wrapper {
+        padding: 1rem 0.75rem;
+        margin: -1rem -0.75rem;
+        min-height: calc(100vh - 56px);
+    }
+
+    .calendar-container {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+
+    /* Calendar sidebar becomes horizontal header */
+    .calendar-sidebar {
+        gap: 1rem;
+    }
+
+    .calendar-header-large {
+        padding: 1.25rem;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .cal-month {
+        font-size: 2.2rem;
+        letter-spacing: -1px;
+    }
+    .cal-year {
+        font-size: 1rem;
+    }
+
+    .cal-nav {
+        margin-top: 0;
+    }
+
+    .sidebar-actions {
+        margin-bottom: 0;
+    }
+
+    /* Calendar Main */
+    .calendar-main {
+        border-radius: 16px;
+        padding: 1rem;
+    }
+
+    /* ─── FullCalendar Compact ─── */
+    .fc .fc-toolbar.fc-header-toolbar {
+        margin-bottom: 0.75rem;
+        gap: 0.4rem;
+    }
+    .fc .fc-toolbar-title {
+        font-size: 0.95rem !important;
+    }
+    .fc .fc-button {
+        padding: 0.3rem 0.6rem !important;
+        font-size: 0.75rem !important;
+        border-radius: 6px !important;
+    }
+    .fc .fc-col-header-cell-cushion {
+        font-size: 0.65rem !important;
+        letter-spacing: 0.5px !important;
+    }
+    .fc .fc-daygrid-day-number {
+        font-size: 0.75rem !important;
+        padding: 4px 6px !important;
+    }
+    .fc .fc-day-today .fc-daygrid-day-number {
+        width: 24px;
+        height: 24px;
+        margin: 3px;
+    }
+    .fc .fc-event {
+        font-size: 0.65rem !important;
+        padding: 1px 4px !important;
+        margin: 1px 3px !important;
+    }
+    .fc .fc-daygrid-more-link {
+        font-size: 0.65rem !important;
+    }
+
+    /* ─── Forms ─── */
     .form-row-2 { grid-template-columns: 1fr; }
     .form-row-3 { grid-template-columns: 1fr; }
 
-    .modal { border-radius: 18px; margin: 0.5rem; }
+    /* ─── Modals (almost full-screen) ─── */
+    .modal-overlay {
+        padding: 0.5rem;
+        align-items: flex-end;
+    }
+    .modal {
+        border-radius: 20px 20px 12px 12px;
+        max-height: 92vh;
+    }
+    .modal-wide { max-width: 100%; }
+    .modal-detail { max-width: 100%; }
+
+    .modal-header { padding: 1rem 1.25rem; }
+    .modal-body { padding: 1.25rem; }
+    .modal-footer { padding: 0.85rem 1.25rem; }
+
+    /* ─── Auth ─── */
     .auth-card { padding: 1.75rem 1.25rem; }
     .demo-accounts { flex-direction: column; }
 
-    /* Calendar Redesign Responsive */
-    .calendar-container {
-        grid-template-columns: 1fr;
-        padding: 1.5rem;
-        gap: 2rem;
+    /* ─── Agenda (Horizontal on mobile) ─── */
+    .legend-section {
+        border-radius: 16px;
+        padding: 1.25rem;
     }
-    .cal-month { font-size: 4rem; }
-    .cal-year { font-size: 3rem; }
+    .agenda-list {
+        max-height: 200px;
+    }
 
+    /* ─── User management ─── */
+    .user-list-item {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 0.75rem;
+    }
+    .user-list-info {
+        min-width: 0;
+        flex: 1 1 calc(100% - 50px);
+    }
+
+    /* ─── Flash Messages ─── */
+    .flash {
+        top: 62px;
+        right: 0.75rem;
+        left: 0.75rem;
+        max-width: none;
+    }
+
+    /* Hide guest-only elements */
     .user-name, .user-role-badge { display: none; }
     .user-btn { padding: 0.4rem; border-radius: 10px; }
 }
 
+/* ─── Small Mobile (≤ 480px) ─────────────────────────────────────────────────── */
 @media (max-width: 480px) {
-    .fc .fc-toolbar { flex-direction: column; }
-    .modal-footer { flex-wrap: wrap; }
-    .modal-footer .btn { flex: 1; justify-content: center; }
+    .fc .fc-toolbar.fc-header-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .fc .fc-toolbar-chunk {
+        display: flex;
+        justify-content: center;
+    }
+
+    .cal-month { font-size: 1.8rem; }
+    .cal-year { font-size: 0.9rem; }
+
+    .calendar-header-large {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .modal-footer {
+        flex-wrap: wrap;
+    }
+    .modal-footer .btn {
+        flex: 1;
+        justify-content: center;
+        min-width: 0;
+    }
+
+    /* Event detail compact */
+    .event-detail-title { font-size: 1.1rem; }
+
+    /* Section cards in user management */
+    .section-card { padding: 1rem; }
+    .form-row-2 { gap: 0.75rem; }
+
+    /* Toggle switch label */
+    .toggle-label { font-size: 0.82rem !important; }
+
+    /* Btn sidebar full width */
+    .btn-sidebar {
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+    }
 }
+

@@ -27,6 +27,23 @@
 
 @auth
 <div class="app-shell app-shell-active">
+    <!-- ─── MOBILE TOP BAR (visible only on small screens) ─────────────────────── -->
+    <div class="mobile-topbar" id="mobileTopbar">
+        <button class="mobile-hamburger" id="mobileMenuBtn" aria-label="Open menu">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+        <div class="mobile-topbar-brand">
+            <img src="{{ asset('images/logobaru.png') }}" alt="Logo" style="height: 26px;">
+            <span>{{ config('app.name', 'Kalender') }}</span>
+        </div>
+        <button class="theme-toggle mobile-theme-btn" id="themeToggleMobile" title="Toggle Dark Mode">
+            <i class="fa-solid fa-sun" id="themeIconLightMobile"></i>
+            <i class="fa-solid fa-moon" id="themeIconDarkMobile"></i>
+        </button>
+    </div>
+    <!-- ─── MOBILE SIDEBAR OVERLAY ─────────────────────────────────────────────── -->
+    <div class="mobile-sidebar-overlay" id="mobileSidebarOverlay"></div>
+
     <!-- ─── APP SIDEBAR ────────────────────────────────────────────────────────── -->
     <aside class="app-sidebar" id="appSidebar">
         <div class="app-sidebar-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; gap: 0.5rem;">
@@ -141,9 +158,9 @@
         html.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
         
-        // Update all toggle icons (Sidebar & Guest Navbar)
-        const iconsLight = document.querySelectorAll('#themeIconLight, #themeIconLightGuest');
-        const iconsDark = document.querySelectorAll('#themeIconDark, #themeIconDarkGuest');
+        // Update all toggle icons (Sidebar, Guest Navbar & Mobile)
+        const iconsLight = document.querySelectorAll('#themeIconLight, #themeIconLightGuest, #themeIconLightMobile');
+        const iconsDark = document.querySelectorAll('#themeIconDark, #themeIconDarkGuest, #themeIconDarkMobile');
         
         if (theme === 'dark') {
             iconsLight.forEach(i => i.style.display = 'none');
@@ -157,7 +174,7 @@
     applyTheme(saved);
 
     // Listen to all possible toggle buttons
-    document.querySelectorAll('#themeToggle, #themeToggleGuest').forEach(btn => {
+    document.querySelectorAll('#themeToggle, #themeToggleGuest, #themeToggleMobile').forEach(btn => {
         btn.addEventListener('click', () => {
             const current = html.getAttribute('data-theme');
             applyTheme(current === 'dark' ? 'light' : 'dark');
@@ -207,9 +224,41 @@ if (flash) {
 // ─── Navbar scroll shadow ─────────────────────────────────────────────────────
 window.addEventListener('scroll', () => {
     const nav = document.getElementById('navbar');
-    if (window.scrollY > 10) nav.classList.add('scrolled');
-    else nav.classList.remove('scrolled');
+    if (nav) {
+        if (window.scrollY > 10) nav.classList.add('scrolled');
+        else nav.classList.remove('scrolled');
+    }
 });
+
+// ─── Mobile Sidebar Toggle ────────────────────────────────────────────────────
+(function() {
+    const sidebar = document.getElementById('appSidebar');
+    const overlay = document.getElementById('mobileSidebarOverlay');
+    const openBtn = document.getElementById('mobileMenuBtn');
+    if (!sidebar || !openBtn) return;
+
+    function openMobileSidebar() {
+        sidebar.classList.add('mobile-open');
+        if (overlay) overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeMobileSidebar() {
+        sidebar.classList.remove('mobile-open');
+        if (overlay) overlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    openBtn.addEventListener('click', openMobileSidebar);
+    if (overlay) overlay.addEventListener('click', closeMobileSidebar);
+
+    // Close sidebar when clicking a nav link on mobile
+    sidebar.querySelectorAll('.app-sidebar-link').forEach(link => {
+        link.addEventListener('click', () => {
+            if (window.innerWidth <= 768) closeMobileSidebar();
+        });
+    });
+})();
 </script>
 
 @stack('scripts')
