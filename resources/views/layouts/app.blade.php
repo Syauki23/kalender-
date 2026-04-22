@@ -30,10 +30,7 @@
     <div class="navbar-container">
         <!-- Logo -->
         <a href="{{ route('home') }}" class="navbar-brand">
-            <div class="brand-icon">
-                <i class="fa-solid fa-calendar-days"></i>
-            </div>
-            <span class="brand-name">Kalendar<span class="brand-accent">Pro</span></span>
+            <img src="{{ asset('images/logobaru.png') }}" alt="Logo" class="brand-logo-img">
         </a>
 
         <!-- Nav Links -->

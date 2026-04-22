@@ -3,23 +3,42 @@
 @section('title', 'Kalender Event Publik')
 
 @section('content')
-<div class="page-header page-header-public">
-    <div class="page-header-inner">
-        <div class="page-header-text">
-            <h1 class="page-title">Kalender Event</h1>
-            <p class="page-subtitle">Jadwal kegiatan dan acara perusahaan</p>
-        </div>
-        <div class="page-header-actions">
-            <a href="{{ route('login') }}" class="btn btn-outline-primary btn-sm">
-                <i class="fa-solid fa-lock"></i> Login untuk Kelola Event
-            </a>
-        </div>
-    </div>
-</div>
+<div class="calendar-redesign-wrapper">
+    <div class="calendar-container">
+    <!-- Sidebar -->
+    <aside class="calendar-sidebar">
+        <div>
+            <div class="calendar-header-large">
+                <div class="cal-month" id="customMonth">Januari</div>
+                <div class="cal-year" id="customYear">2025</div>
+                
+                <div class="cal-nav">
+                    <button class="btn-cal-nav" id="calPrev" title="Bulan Sebelumnya">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <button class="btn-cal-nav" id="calNext" title="Bulan Berikutnya">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
 
-<!-- Calendar Wrapper -->
-<div class="calendar-wrapper">
-    <div id="publicCalendar"></div>
+            <!-- Agenda List Section -->
+            <div class="legend-section">
+                <div class="legend-title" id="agendaTitle">Agenda Bulan April</div>
+                <div id="agendaList" class="agenda-list">
+                    <!-- Agenda items will be injected here -->
+                    <div class="agenda-empty">Tidak ada agenda di bulan ini.</div>
+                </div>
+            </div>
+        </div>
+
+    </aside>
+
+    <!-- Main Calendar -->
+    <main class="calendar-main">
+        <div id="publicCalendar"></div>
+    </main>
+</div>
 </div>
 
 <!-- ─── EVENT DETAIL MODAL ─────────────────────────────────────────────────── -->
@@ -74,30 +93,95 @@ document.addEventListener('DOMContentLoaded', function () {
     const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         locale: 'id',
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: ''
-        },
-        buttonText: { today: 'Hari Ini' },
+        headerToolbar: false, // Hide default header
         height: 'auto',
         fixedWeekCount: false,
         dayMaxEvents: 3,
         events: '/api/events',
         eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
         eventDidMount: function(info) {
-            // Tooltip saat hover
             info.el.setAttribute('title', info.event.title);
         },
         eventClick: function(info) {
             showDetailModal(info.event);
         },
-        dateClick: function() {
-            // Public: tidak bisa tambah event
+        datesSet: function(info) {
+            // Update sidebar Month/Year
+            const date = info.view.currentStart;
+            const monthName = date.toLocaleDateString('id-ID', { month: 'long' });
+            const year = date.getFullYear();
+            
+            document.getElementById('customMonth').textContent = monthName;
+            document.getElementById('customYear').textContent = year;
+            document.getElementById('agendaTitle').textContent = `Agenda Bulan ${monthName}`;
+
+            // Fetch and show Agendas
+            fetchAgendas(info.view.activeStart, info.view.activeEnd);
         }
     });
 
     calendar.render();
+
+    // ─── Fetch Agendas for Sidebar ──────────────────────────────────────────
+    function fetchAgendas(start, end) {
+        const agendaList = document.getElementById('agendaList');
+        const apiUrl = `/api/events?start=${start.toISOString()}&end=${end.toISOString()}`;
+
+        fetch(apiUrl)
+            .then(res => res.json())
+            .then(events => {
+                agendaList.innerHTML = '';
+                
+                // Filter events based on current view range (since API might return all)
+                const monthEvents = events.filter(ev => {
+                    const evDate = new Date(ev.start);
+                    return evDate >= start && evDate <= end;
+                });
+
+                if (monthEvents.length === 0) {
+                    agendaList.innerHTML = '<div class="agenda-empty">Tidak ada agenda di bulan ini.</div>';
+                    return;
+                }
+
+                // Sort events by date
+                monthEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+                monthEvents.forEach(ev => {
+                    const evDate = new Date(ev.start);
+                    const day = evDate.getDate();
+                    const dow = evDate.toLocaleDateString('id-ID', { weekday: 'short' });
+                    const time = ev.extendedProps.start_time || '00:00';
+                    
+                    const item = document.createElement('a');
+                    item.href = '#';
+                    item.className = 'agenda-item';
+                    item.onclick = (e) => {
+                        e.preventDefault();
+                        showDetailModal(calendar.getEventById(ev.id) || ev);
+                    };
+
+                    item.innerHTML = `
+                        <div class="agenda-date">
+                            <span class="day">${day}</span>
+                            <span class="dow">${dow}</span>
+                        </div>
+                        <div class="agenda-info">
+                            <div class="agenda-time">${time} WIB</div>
+                            <div class="agenda-name">${ev.title}</div>
+                        </div>
+                    `;
+                    agendaList.appendChild(item);
+                });
+            })
+            .catch(err => {
+                console.error('Error fetching agendas:', err);
+                agendaList.innerHTML = '<div class="agenda-empty">Gagal memuat agenda.</div>';
+            });
+    }
+
+    // ─── Custom Navigation ──────────────────────────────────────────────────
+    document.getElementById('calPrev').addEventListener('click', () => calendar.prev());
+    document.getElementById('calNext').addEventListener('click', () => calendar.next());
 
     // ─── Detail Modal ────────────────────────────────────────────────────────
     function showDetailModal(event) {
@@ -107,7 +191,9 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('detailColorBar').style.background = colorMap[props.color_label] || '#3b82f6';
         document.getElementById('detailTitle').textContent = event.title;
 
-        const dateStr = event.start ? event.start.toLocaleDateString('id-ID', {weekday:'long', year:'numeric', month:'long', day:'numeric'}) : '-';
+        // Handle both FC Event object and raw JSON object
+        const startObj = typeof event.start === 'string' ? new Date(event.start) : event.start;
+        const dateStr = startObj ? startObj.toLocaleDateString('id-ID', {weekday:'long', year:'numeric', month:'long', day:'numeric'}) : '-';
         document.getElementById('detailDate').textContent = dateStr;
 
         const timeEl = document.getElementById('detailTimeRow');

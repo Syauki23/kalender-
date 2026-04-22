@@ -7,11 +7,8 @@
     <div class="auth-card">
         <!-- Logo -->
         <div class="auth-logo">
-            <div class="auth-logo-icon">
-                <i class="fa-solid fa-calendar-days"></i>
-            </div>
-            <h1 class="auth-logo-title">Kalendar<span class="brand-accent">Pro</span></h1>
-            <p class="auth-logo-sub">Masuk ke sistem kalender korporat</p>
+            <img src="{{ asset('images/logobaru.png') }}" alt="Logo" class="auth-logo-img">
+            <p class="auth-logo-sub">Sistem Manajemen Event & Kalender Korporat Terpadu</p>
         </div>
 
         <!-- Error -->
@@ -62,21 +59,21 @@
             </button>
         </form>
 
-        <!-- Demo Accounts -->
+        <!-- Quick Access -->
         <div class="auth-demo">
-            <p class="auth-demo-title">Akun Demo</p>
+            <p class="auth-demo-title">Akses Cepat (Demo)</p>
             <div class="demo-accounts">
-                <button class="demo-account-btn" onclick="fillDemo('admin@kalender.com','admin123')">
+                <button type="button" class="demo-account-btn" onclick="fillDemo('admin@kalender.com','admin123')">
                     <i class="fa-solid fa-crown"></i>
-                    <div>
-                        <strong>Admin</strong>
+                    <div class="demo-account-btn-text">
+                        <strong>Administrator</strong>
                         <span>admin@kalender.com</span>
                     </div>
                 </button>
-                <button class="demo-account-btn" onclick="fillDemo('editor@kalender.com','editor123')">
+                <button type="button" class="demo-account-btn" onclick="fillDemo('editor@kalender.com','editor123')">
                     <i class="fa-solid fa-pen-nib"></i>
-                    <div>
-                        <strong>Editor</strong>
+                    <div class="demo-account-btn-text">
+                        <strong>Event Editor</strong>
                         <span>editor@kalender.com</span>
                     </div>
                 </button>
