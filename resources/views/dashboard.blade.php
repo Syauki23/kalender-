@@ -637,15 +637,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (manageBtn) manageBtn.addEventListener('click', openUserManagement);
     if (manageBtnSidebar) manageBtnSidebar.addEventListener('click', openUserManagement);
-    
-    const manageDeptBtnApp = document.getElementById('manageDeptBtnSidebarApp');
-    if (manageDeptBtnApp) {
-        manageDeptBtnApp.onclick = (e) => {
-            e.preventDefault();
-            loadDepartments();
-            openModal('deptModalOverlay');
-        };
-    }
 
     document.getElementById('usersModalClose').addEventListener('click', () => closeModal('usersModalOverlay'));
 
