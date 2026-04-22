@@ -208,8 +208,12 @@
                     <input type="hidden" id="edId">
                     <div class="form-row-2">
                         <div class="form-group">
-                            <label class="form-label" for="edName">Nama Akun (Dept/Orang)</label>
+                            <label class="form-label" for="edName">Nama Akun (Orang)</label>
                             <input type="text" id="edName" class="form-input" placeholder="Nama lengkap" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="edUsername">Username (Untuk Login)</label>
+                            <input type="text" id="edUsername" class="form-input" placeholder="Contoh: ppic_admin" required>
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="edEmail">Email</label>
@@ -599,6 +603,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <div class="user-list-avatar">${u.name.charAt(0).toUpperCase()}</div>
                         <div class="user-list-info">
                             <strong>${u.name}</strong>
+                            <span style="color: var(--cal-accent); font-weight: 600;">@${u.username}</span>
                             <span>${u.email}</span>
                         </div>
                         <div style="text-align: right; margin-right: 1rem;">
@@ -707,6 +712,7 @@ document.addEventListener('DOMContentLoaded', function () {
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
             body: JSON.stringify({
                 name:            document.getElementById('edName').value,
+                username:        document.getElementById('edUsername').value,
                 email:           document.getElementById('edEmail').value,
                 password:        document.getElementById('edPass').value,
                 department_id:   document.getElementById('edDept').value,
@@ -730,6 +736,7 @@ document.addEventListener('DOMContentLoaded', function () {
     window.editUser = function(u) {
         document.getElementById('edId').value = u.id;
         document.getElementById('edName').value = u.name;
+        document.getElementById('edUsername').value = u.username;
         document.getElementById('edEmail').value = u.email;
         document.getElementById('edDept').value = u.department ? u.department.id : '';
         document.getElementById('edPass').value = '';
@@ -744,6 +751,7 @@ document.addEventListener('DOMContentLoaded', function () {
     window.cancelEditUser = function() {
         document.getElementById('edId').value = '';
         document.getElementById('edName').value = '';
+        document.getElementById('edUsername').value = '';
         document.getElementById('edEmail').value = '';
         document.getElementById('edPass').value = '';
         document.getElementById('edDept').value = '';

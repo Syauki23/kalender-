@@ -11,7 +11,7 @@ class EventController extends Controller
     // Ambil semua event (untuk FullCalendar via JSON)
     public function index(Request $request)
     {
-        $user  = Auth::user();
+        $user = Auth::user();
         $query = Event::with('creator:id,name');
 
         // Visibility Logic
@@ -20,28 +20,28 @@ class EventController extends Controller
             $query->whereNull('department_id');
         } elseif (!$user->isAdmin()) {
             // Editor hanya bisa lihat event publik ATAU event milik departemennya
-            $query->where(function($q) use ($user) {
+            $query->where(function ($q) use ($user) {
                 $q->whereNull('department_id')
-                  ->orWhere('department_id', $user->department_id);
+                    ->orWhere('department_id', $user->department_id);
             });
         }
         // Admin bisa lihat semuanya
 
         $events = $query->get()->map(function ($event) {
             return [
-                'id'          => $event->id,
-                'title'       => $event->title,
-                'start'       => $event->date->format('Y-m-d') . ($event->start_time ? 'T' . $event->start_time : ''),
-                'end'         => $event->date->format('Y-m-d') . ($event->end_time ? 'T' . $event->end_time : ''),
-                'color'       => $this->resolveColor($event->color),
+                'id' => $event->id,
+                'title' => $event->title,
+                'start' => $event->date->format('Y-m-d') . ($event->start_time ? 'T' . $event->start_time : ''),
+                'end' => $event->date->format('Y-m-d') . ($event->end_time ? 'T' . $event->end_time : ''),
+                'color' => $this->resolveColor($event->color),
                 'extendedProps' => [
                     'description' => $event->description,
-                    'location'    => $event->location,
+                    'location' => $event->location,
                     'color_label' => $event->color,
-                    'start_time'  => $event->start_time,
-                    'end_time'    => $event->end_time,
-                    'creator'     => $event->creator?->name,
-                    'created_by'  => $event->created_by,
+                    'start_time' => $event->start_time,
+                    'end_time' => $event->end_time,
+                    'creator' => $event->creator?->name,
+                    'created_by' => $event->created_by,
                     'department_id' => $event->department_id,
                 ],
             ];
@@ -56,29 +56,29 @@ class EventController extends Controller
         $this->requireAuth();
 
         $validated = $request->validate([
-            'title'       => 'required|string|max:255',
+            'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'date'        => 'required|date',
-            'start_time'  => 'nullable|regex:/^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$/',
-            'end_time'    => 'nullable|regex:/^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$/',
-            'location'    => 'nullable|string|max:255',
-            'color'       => 'required|in:blue,green,orange,red,yellow',
-            'is_private'  => 'nullable|boolean',
+            'date' => 'required|date',
+            'start_time' => 'nullable|regex:/^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$/',
+            'end_time' => 'nullable|regex:/^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$/',
+            'location' => 'nullable|string|max:255',
+            'color' => 'required|in:blue,green,orange,red,yellow',
+            'is_private' => 'nullable|boolean',
         ]);
 
         $isPrivate = $request->input('is_private') == 1 || $request->input('is_private') === true;
         $deptId = ($isPrivate && Auth::user()->department_id) ? Auth::user()->department_id : null;
 
         $event = Event::create([
-            'title'         => $validated['title'],
-            'description'   => $validated['description'],
-            'date'          => $validated['date'],
-            'start_time'    => $validated['start_time'],
-            'end_time'      => $validated['end_time'],
-            'location'      => $validated['location'],
-            'color'         => $validated['color'],
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'date' => $validated['date'],
+            'start_time' => $validated['start_time'],
+            'end_time' => $validated['end_time'],
+            'location' => $validated['location'],
+            'color' => $validated['color'],
             'department_id' => $deptId,
-            'created_by'    => Auth::id(),
+            'created_by' => Auth::id(),
         ]);
 
         return response()->json(['success' => true, 'event' => $event], 201);
@@ -96,28 +96,25 @@ class EventController extends Controller
         $this->requireAuth();
 
         $validated = $request->validate([
-            'title'       => 'required|string|max:255',
+            'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'date'        => 'required|date',
-            'start_time'  => 'nullable|regex:/^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$/',
-            'end_time'    => 'nullable|regex:/^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$/',
-            'location'    => 'nullable|string|max:255',
-            'color'       => 'required|in:blue,green,orange,red,yellow',
-            'is_private'  => 'nullable|boolean',
+            'date' => 'required|date',
+            'start_time' => 'nullable|regex:/^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$/',
+            'end_time' => 'nullable|regex:/^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$/',
+            'location' => 'nullable|string|max:255',
+            'color' => 'required|in:blue,green,orange,red,yellow',
+            'is_private' => 'nullable|boolean',
         ]);
 
-        $isPrivate = $request->input('is_private') == 1 || $request->input('is_private') === true;
-        $deptId = ($isPrivate && Auth::user()->department_id) ? Auth::user()->department_id : null;
-
         $event->update([
-            'title'         => $validated['title'],
-            'description'   => $validated['description'],
-            'date'          => $validated['date'],
-            'start_time'    => $validated['start_time'],
-            'end_time'      => $validated['end_time'],
-            'location'      => $validated['location'],
-            'color'         => $validated['color'],
-            'department_id' => $deptId,
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'date' => $validated['date'],
+            'start_time' => $validated['start_time'],
+            'end_time' => $validated['end_time'],
+            'location' => $validated['location'],
+            'color' => $validated['color'],
+            'department_id' => ($request->is_private && Auth::user()->department_id) ? Auth::user()->department_id : null,
         ]);
 
         return response()->json(['success' => true, 'event' => $event]);
@@ -140,11 +137,11 @@ class EventController extends Controller
     private function resolveColor(string $color): string
     {
         return match ($color) {
-            'green'  => '#10b981',
+            'green' => '#10b981',
             'orange' => '#f59e0b',
-            'red'    => '#ef4444',
+            'red' => '#ef4444',
             'yellow' => '#eab308',
-            default  => '#3b82f6', // blue
+            default => '#3b82f6', // blue
         };
     }
 

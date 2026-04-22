@@ -24,12 +24,12 @@
             @csrf
 
             <div class="form-group">
-                <label for="email" class="form-label">Email</label>
+                <label for="username" class="form-label">Username</label>
                 <div class="input-wrapper">
-                    <i class="fa-solid fa-envelope input-icon"></i>
-                    <input type="email" id="email" name="email" class="form-input"
-                           value="{{ old('email') }}" placeholder="contoh@perusahaan.com"
-                           required autocomplete="email">
+                    <i class="fa-solid fa-user input-icon"></i>
+                    <input type="text" id="username" name="username" class="form-input"
+                           value="{{ old('username') }}" placeholder="Masukkan username"
+                           required autocomplete="username">
                 </div>
             </div>
 
@@ -63,18 +63,18 @@
         <div class="auth-demo">
             <p class="auth-demo-title">Akses Cepat (Demo)</p>
             <div class="demo-accounts">
-                <button type="button" class="demo-account-btn" onclick="fillDemo('admin@kalender.com','admin123')">
+                <button type="button" class="demo-account-btn" onclick="fillDemo('admin','admin123')">
                     <i class="fa-solid fa-crown"></i>
                     <div class="demo-account-btn-text">
                         <strong>Administrator</strong>
-                        <span>admin@kalender.com</span>
+                        <span>username: admin</span>
                     </div>
                 </button>
-                <button type="button" class="demo-account-btn" onclick="fillDemo('editor@kalender.com','editor123')">
+                <button type="button" class="demo-account-btn" onclick="fillDemo('it','it123')">
                     <i class="fa-solid fa-pen-nib"></i>
                     <div class="demo-account-btn-text">
-                        <strong>Event Editor</strong>
-                        <span>editor@kalender.com</span>
+                        <strong>Event Editor (IT)</strong>
+                        <span>username: it</span>
                     </div>
                 </button>
             </div>
@@ -112,10 +112,10 @@ document.getElementById('loginForm').addEventListener('submit', function() {
 });
 
 // Fill demo credentials
-function fillDemo(email, pass) {
-    document.getElementById('email').value = email;
+function fillDemo(user, pass) {
+    document.getElementById('username').value = user;
     document.getElementById('password').value = pass;
-    document.getElementById('email').focus();
+    document.getElementById('username').focus();
 }
 </script>
 @endpush

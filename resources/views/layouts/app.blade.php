@@ -32,11 +32,11 @@
         <div class="app-sidebar-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; gap: 0.5rem;">
             <div class="app-sidebar-logo" style="display: flex; align-items: center; gap: 0.8rem; flex: 1; overflow: hidden; padding: 0;">
                 <img src="{{ asset('images/logobaru.png') }}" alt="Logo" style="height: 32px; flex-shrink: 0;">
-                <span class="brand-text" style="font-weight: 800; font-size: 0.9rem; color: var(--cal-accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                <span class="brand-text" style="font-weight: 800; font-size: 0.9rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                     {{ config('app.name', 'Kalender') }}
                 </span>
             </div>
-            <button id="sidebarToggle" style="background: var(--bg-surface); border: 1px solid var(--border-color); cursor: pointer; color: var(--text-primary); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <button id="sidebarToggle" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); cursor: pointer; color: rgba(255,255,255,0.6); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                 <i class="fa-solid fa-bars-staggered"></i>
             </button>
         </div>
@@ -70,7 +70,7 @@
             </div>
 
             <div class="theme-toggle-container">
-                <button class="theme-toggle" id="themeToggle" title="Toggle Dark Mode" style="width: 100%; border-radius: 12px;">
+                <button class="theme-toggle" id="themeToggle" title="Toggle Dark Mode" style="width: 100%; border-radius: 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.6);">
                     <i class="fa-solid fa-sun" id="themeIconLight"></i>
                     <i class="fa-solid fa-moon" id="themeIconDark"></i>
                     <span style="margin-left: 0.5rem; font-size: 0.85rem; font-weight: 600;" class="theme-label">Tema</span>
@@ -79,7 +79,7 @@
 
             <form action="{{ route('logout') }}" method="POST">
                 @csrf
-                <button type="submit" class="btn btn-danger btn-sm btn-logout-sidebar" style="width: 100%; justify-content: center;">
+                <button type="submit" class="btn btn-sm" style="width: 100%; justify-content: center; background: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.15); border-radius: 12px;">
                     <i class="fa-solid fa-right-from-bracket"></i> <span class="logout-label">Logout</span>
                 </button>
             </form>

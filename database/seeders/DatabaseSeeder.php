@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             ['email' => 'admin@kalender.com'],
             [
                 'name'          => 'Administrator',
+                'username'      => 'admin',
                 'password'      => Hash::make('admin123'),
                 'role'          => 'admin',
                 'department_id' => $legalDept?->id,
@@ -32,6 +33,7 @@ class DatabaseSeeder extends Seeder
             ['email' => 'it@kalender.com'],
             [
                 'name'          => 'IT Department',
+                'username'      => 'it',
                 'password'      => Hash::make('it123'),
                 'role'          => 'editor',
                 'department_id' => $itDept?->id,

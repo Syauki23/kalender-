@@ -60,6 +60,7 @@ class AdminController extends Controller
         return response()->json($users->map(fn($u) => [
             'id'    => $u->id,
             'name'  => $u->name,
+            'username' => $u->username,
             'email' => $u->email,
             'role'  => $u->role,
             'department' => $u->department ? ['id' => $u->department->id, 'name' => $u->department->name] : null,
@@ -71,6 +72,7 @@ class AdminController extends Controller
         $this->requireAdmin();
         $validated = $request->validate([
             'name'          => 'required|string|max:255',
+            'username'      => 'required|string|max:255|unique:users,username',
             'email'         => 'required|email|unique:users,email',
             'password'      => 'required|string',
             'department_id' => 'required|exists:departments,id',
@@ -78,6 +80,7 @@ class AdminController extends Controller
 
         $user = User::create([
             'name'          => $validated['name'],
+            'username'      => $validated['username'],
             'email'         => $validated['email'],
             'password'      => Hash::make($validated['password']),
             'role'          => 'editor',
@@ -96,6 +99,7 @@ class AdminController extends Controller
 
         $validated = $request->validate([
             'name'          => 'required|string|max:255',
+            'username'      => 'required|string|max:255|unique:users,username,' . $user->id,
             'email'         => 'required|email|unique:users,email,' . $user->id,
             'password'      => 'nullable|string',
             'department_id' => 'required|exists:departments,id',
@@ -103,6 +107,7 @@ class AdminController extends Controller
 
         $data = [
             'name'          => $validated['name'],
+            'username'      => $validated['username'],
             'email'         => $validated['email'],
             'department_id' => $validated['department_id'],
         ];
