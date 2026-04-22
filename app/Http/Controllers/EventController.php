@@ -19,10 +19,10 @@ class EventController extends Controller
             // Guest hanya bisa lihat event publik (department_id IS NULL)
             $query->whereNull('department_id');
         } elseif (!$user->canManageGlobal()) {
-            // Role 'user' (Akun Dept) hanya bisa lihat event publik ATAU event miliknya sendiri
+            // Role 'user' (Akun Dept) hanya bisa lihat event publik ATAU event milik departemennya
             $query->where(function ($q) use ($user) {
                 $q->whereNull('department_id')
-                    ->orWhere('created_by', $user->id);
+                    ->orWhere('department_id', $user->department_id);
             });
         }
         // Admin & Editor (canManageGlobal) bisa lihat semuanya
@@ -106,6 +106,10 @@ class EventController extends Controller
         $this->requireAuth();
         $user = Auth::user();
 
+        if (!$user->canManageGlobal() && $event->created_by !== $user->id) {
+            return response()->json(['error' => 'Tidak diizinkan.'], 403);
+        }
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -143,12 +147,13 @@ class EventController extends Controller
         return response()->json(['success' => true, 'event' => $event]);
     }
 
-    // Hapus event (hanya Admin)
+    // Hapus event
     public function destroy(Event $event)
     {
+        $this->requireAuth();
         $user = Auth::user();
 
-        if (!$user || !$user->canManageGlobal()) {
+        if (!$user->canManageGlobal() && $event->created_by !== $user->id) {
             return response()->json(['error' => 'Tidak diizinkan.'], 403);
         }
 

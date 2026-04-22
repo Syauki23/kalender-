@@ -120,20 +120,32 @@
                     <label class="toggle-switch">
                         <input type="checkbox" id="evIsPrivate" name="is_private" value="1">
                         <span class="toggle-slider"></span>
-                        <span class="toggle-label" style="font-weight: 700; color: var(--text-primary);">Event Privat Departemen</span>
+                        <span class="toggle-label" style="font-weight: 700; color: var(--text-primary);">Event Privat</span>
                     </label>
-                    <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0.25rem 0 0 52px;">
-                        Aktifkan agar hanya rekan satu departemen Anda yang dapat melihat event ini.
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0.25rem 0 0 52px;" id="privateLabelHint">
+                        Aktifkan agar event ini hanya bisa dilihat oleh pihak terkait.
                     </p>
                 </div>
+
+                @if($user->canManageGlobal())
+                <div class="form-group" id="evDeptGroup" style="display: none; margin-left: 52px; margin-top: 0.5rem; background: var(--bg-surface-2); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                    <label class="form-label" for="evDeptId" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Pilih Departemen Tujuan</label>
+                    <select id="evDeptId" class="form-input">
+                        @foreach($departments as $dept)
+                            <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                        @endforeach
+                    </select>
+                    <p style="font-size: 0.65rem; color: var(--text-muted); margin-top: 0.5rem;">
+                        <i class="fa-solid fa-circle-info"></i> Sebagai Global Manager, Anda bisa menentukan departemen mana yang berhak melihat event ini.
+                    </p>
+                </div>
+                @endif
             </form>
         </div>
         <div class="modal-footer">
-            @if($user->isAdmin())
             <button class="btn btn-danger" id="deleteEventBtn" style="display:none; margin-right:auto;">
                 <i class="fa-solid fa-trash"></i> Hapus
             </button>
-            @endif
             <button class="btn btn-outline" id="eventCancelBtn">Batal</button>
             <button class="btn btn-primary" id="eventSaveBtn">
                 <span id="saveBtnText"><i class="fa-solid fa-floppy-disk"></i> Simpan</span>
@@ -187,7 +199,7 @@
         </div>
         <div class="modal-footer">
             <button class="btn btn-outline" id="detailCloseBtn">Tutup</button>
-            <button class="btn btn-primary" id="detailEditBtn">
+            <button class="btn btn-primary" id="detailEditBtn" style="display:none;">
                 <i class="fa-solid fa-pen"></i> Edit
             </button>
         </div>
@@ -285,6 +297,7 @@
 // ─── Config ─────────────────────────────────────────────────────────────────
 const IS_ADMIN = {{ $user->isAdmin() ? 'true' : 'false' }};
 const IS_EDITOR = {{ $user->isEditor() ? 'true' : 'false' }};
+const CURRENT_USER_ID = {{ $user->id }};
 const CSRF = document.querySelector('meta[name="csrf-token"]').content;
 const colorMap = { blue: '#3b82f6', green: '#10b981', orange: '#f59e0b', red: '#ef4444' };
 
@@ -450,6 +463,9 @@ document.addEventListener('DOMContentLoaded', function () {
         // Private Badge
         document.getElementById('detailPrivateBadge').style.display = props.department_id ? 'block' : 'none';
 
+        const canEdit = IS_ADMIN || IS_EDITOR || props.created_by == CURRENT_USER_ID;
+        document.getElementById('detailEditBtn').style.display = canEdit ? 'inline-flex' : 'none';
+
         openModal('detailModalOverlay');
     }
 
@@ -469,11 +485,24 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('evDesc').value = event.description || '';
                 const radio = document.querySelector(`input[name="evColor"][value="${event.color}"]`);
                 if (radio) radio.checked = true;
-                document.getElementById('evIsPrivate').checked = !!event.department_id;
+                
+                const isPrivate = !!event.department_id;
+                document.getElementById('evIsPrivate').checked = isPrivate;
+                
+                const deptGroup = document.getElementById('evDeptGroup');
+                if (deptGroup) {
+                    deptGroup.style.display = isPrivate ? 'block' : 'none';
+                    if (event.department_id) {
+                        document.getElementById('evDeptId').value = event.department_id;
+                    }
+                }
 
                 document.getElementById('eventModalTitle').textContent = 'Edit Event';
                 const deleteBtn = document.getElementById('deleteEventBtn');
-                if (deleteBtn) deleteBtn.style.display = IS_ADMIN ? 'inline-flex' : 'none';
+                if (deleteBtn) {
+                    const canDelete = IS_ADMIN || IS_EDITOR || event.created_by == CURRENT_USER_ID;
+                    deleteBtn.style.display = canDelete ? 'inline-flex' : 'none';
+                }
                 openModal('eventModalOverlay');
             });
     });
@@ -501,6 +530,7 @@ document.addEventListener('DOMContentLoaded', function () {
             description: document.getElementById('evDesc').value || null,
             color: document.querySelector('input[name="evColor"]:checked')?.value || 'blue',
             is_private: document.getElementById('evIsPrivate').checked ? 1 : 0,
+            department_id: document.getElementById('evDeptId') ? document.getElementById('evDeptId').value : null,
             _token: CSRF,
         };
 
@@ -577,6 +607,15 @@ document.addEventListener('DOMContentLoaded', function () {
         if (delBtn) delBtn.style.display = 'none';
         openModal('eventModalOverlay');
     });
+
+    // Toggle Dept Selection for Global Users
+    const evIsPrivate = document.getElementById('evIsPrivate');
+    const evDeptGroup = document.getElementById('evDeptGroup');
+    if (evIsPrivate && evDeptGroup) {
+        evIsPrivate.addEventListener('change', function() {
+            evDeptGroup.style.display = this.checked ? 'block' : 'none';
+        });
+    }
 
     // ─── Modal close buttons ──────────────────────────────────────────────────
     document.getElementById('eventModalClose').addEventListener('click', () => closeModal('eventModalOverlay'));
@@ -810,6 +849,8 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('evDesc').value = '';
         document.querySelector('input[name="evColor"][value="blue"]').checked = true;
         document.getElementById('evIsPrivate').checked = false;
+        const deptGroup = document.getElementById('evDeptGroup');
+        if (deptGroup) deptGroup.style.display = 'none';
     }
 });
 </script>
