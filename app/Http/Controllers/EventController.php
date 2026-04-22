@@ -42,8 +42,8 @@ class EventController extends Controller
             'title'       => 'required|string|max:255',
             'description' => 'nullable|string',
             'date'        => 'required|date',
-            'start_time'  => 'nullable|date_format:H:i',
-            'end_time'    => 'nullable|date_format:H:i|after:start_time',
+            'start_time'  => 'nullable|regex:/^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$/',
+            'end_time'    => 'nullable|regex:/^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$/',
             'location'    => 'nullable|string|max:255',
             'color'       => 'required|in:blue,green,orange,red,yellow',
         ]);
@@ -71,10 +71,10 @@ class EventController extends Controller
             'title'       => 'required|string|max:255',
             'description' => 'nullable|string',
             'date'        => 'required|date',
-            'start_time'  => 'nullable|date_format:H:i',
-            'end_time'    => 'nullable|date_format:H:i',
+            'start_time'  => 'nullable|regex:/^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$/',
+            'end_time'    => 'nullable|regex:/^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$/',
             'location'    => 'nullable|string|max:255',
-            'color'       => 'required|in:blue,green,orange,red',
+            'color'       => 'required|in:blue,green,orange,red,yellow',
         ]);
 
         $event->update($validated);
@@ -102,6 +102,7 @@ class EventController extends Controller
             'green'  => '#10b981',
             'orange' => '#f59e0b',
             'red'    => '#ef4444',
+            'yellow' => '#eab308',
             default  => '#3b82f6', // blue
         };
     }

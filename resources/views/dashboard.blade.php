@@ -3,30 +3,46 @@
 @section('title', 'Dashboard')
 
 @section('content')
-<div class="page-header">
-    <div class="page-header-inner">
-        <div class="page-header-text">
-            <h1 class="page-title">Dashboard Kalender</h1>
-            <p class="page-subtitle">Selamat datang, <strong>{{ $user->name }}</strong>
-                <span class="badge-role role-{{ $user->role }}">{{ ucfirst($user->role) }}</span>
-            </p>
-        </div>
-        <div class="page-header-actions">
-            <button class="btn btn-primary" id="addEventBtn">
-                <i class="fa-solid fa-plus"></i> Tambah Event
-            </button>
-            @if($user->isAdmin())
-            <button class="btn btn-outline-primary" id="manageUsersBtn">
-                <i class="fa-solid fa-users-gear"></i> Kelola Editor
-            </button>
-            @endif
-        </div>
-    </div>
-</div>
+<div class="calendar-redesign-wrapper">
+    <div class="calendar-container">
+        <!-- Sidebar -->
+        <aside class="calendar-sidebar">
+            <div>
+                <div class="calendar-header-large">
+                    <div class="cal-month" id="customMonth">Januari</div>
+                    <div class="cal-year" id="customYear">2025</div>
+                    
+                    <div class="cal-nav">
+                        <button class="btn-cal-nav" id="calPrev" title="Bulan Sebelumnya">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <button class="btn-cal-nav" id="calNext" title="Bulan Berikutnya">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
 
-<!-- Calendar Wrapper -->
-<div class="calendar-wrapper">
-    <div id="dashboardCalendar"></div>
+                <div class="sidebar-actions">
+                    <button class="btn btn-sidebar" id="addEventBtn">
+                        <i class="fa-solid fa-plus"></i> Tambah Event
+                    </button>
+                </div>
+
+                <!-- Agenda List Section -->
+                <div class="legend-section">
+                    <div class="legend-title" id="agendaTitle">Agenda Bulan</div>
+                    <div id="agendaList" class="agenda-list">
+                        <div class="agenda-empty">Tidak ada agenda.</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Calendar -->
+        <main class="calendar-main">
+            <div id="dashboardCalendar"></div>
+        </main>
+    </div>
 </div>
 
 <!-- ─── ADD / EDIT EVENT MODAL ──────────────────────────────────────────────── -->
@@ -242,12 +258,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const calendar = new FullCalendar.Calendar(calEl, {
         initialView: 'dayGridMonth',
         locale: 'id',
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,listMonth'
-        },
-        buttonText: { today: 'Hari Ini', month: 'Bulan', week: 'Minggu', list: 'Daftar' },
+        headerToolbar: false, // Hide default header
         height: 'auto',
         fixedWeekCount: false,
         dayMaxEvents: 3,
@@ -264,10 +275,84 @@ document.addEventListener('DOMContentLoaded', function () {
         eventClick: function(info) {
             currentEventId = info.event.id;
             showDetailModal(info.event);
+        },
+        datesSet: function(info) {
+            // Update sidebar Month/Year
+            const date = info.view.currentStart;
+            const monthName = date.toLocaleDateString('id-ID', { month: 'long' });
+            const year = date.getFullYear();
+            
+            document.getElementById('customMonth').textContent = monthName;
+            document.getElementById('customYear').textContent = year;
+            document.getElementById('agendaTitle').textContent = `Agenda Bulan ${monthName}`;
+
+            // Fetch and show Agendas
+            fetchAgendas(info.view.activeStart, info.view.activeEnd);
         }
     });
 
     calendar.render();
+
+    // ─── Custom Navigation ──────────────────────────────────────────────────
+    document.getElementById('calPrev').addEventListener('click', () => calendar.prev());
+    document.getElementById('calNext').addEventListener('click', () => calendar.next());
+
+    // ─── Fetch Agendas for Sidebar ──────────────────────────────────────────
+    function fetchAgendas(start, end) {
+        const agendaList = document.getElementById('agendaList');
+        const apiUrl = `/api/events?start=${start.toISOString()}&end=${end.toISOString()}`;
+
+        fetch(apiUrl)
+            .then(res => res.json())
+            .then(events => {
+                agendaList.innerHTML = '';
+                
+                // Filter events based on current view range (since API might return all)
+                const monthEvents = events.filter(ev => {
+                    const evDate = new Date(ev.start);
+                    return evDate >= start && evDate <= end;
+                });
+
+                if (monthEvents.length === 0) {
+                    agendaList.innerHTML = '<div class="agenda-empty">Tidak ada agenda di bulan ini.</div>';
+                    return;
+                }
+
+                // Sort events by date
+                monthEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+                monthEvents.forEach(ev => {
+                    const evDate = new Date(ev.start);
+                    const day = evDate.getDate();
+                    const dow = evDate.toLocaleDateString('id-ID', { weekday: 'short' });
+                    const time = ev.extendedProps.start_time || '00:00';
+                    
+                    const item = document.createElement('a');
+                    item.href = '#';
+                    item.className = 'agenda-item';
+                    item.onclick = (e) => {
+                        e.preventDefault();
+                        showDetailModal(calendar.getEventById(ev.id) || ev);
+                    };
+
+                    item.innerHTML = `
+                        <div class="agenda-date">
+                            <span class="day">${day}</span>
+                            <span class="dow">${dow}</span>
+                        </div>
+                        <div class="agenda-info">
+                            <div class="agenda-time">${time} WIB</div>
+                            <div class="agenda-name">${ev.title}</div>
+                        </div>
+                    `;
+                    agendaList.appendChild(item);
+                });
+            })
+            .catch(err => {
+                console.error('Error fetching agendas:', err);
+                agendaList.innerHTML = '<div class="agenda-empty">Gagal memuat agenda.</div>';
+            });
+    }
 
     // ─── Detail Modal ─────────────────────────────────────────────────────────
     function showDetailModal(event) {
@@ -275,7 +360,9 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('detailColorBar').style.background = colorMap[props.color_label] || '#3b82f6';
         document.getElementById('detailTitle').textContent = event.title;
 
-        const dateStr = event.start ? event.start.toLocaleDateString('id-ID', {weekday:'long', year:'numeric', month:'long', day:'numeric'}) : '-';
+        // Handle both FC Event object and raw JSON object
+        const startObj = typeof event.start === 'string' ? new Date(event.start) : event.start;
+        const dateStr = startObj ? startObj.toLocaleDateString('id-ID', {weekday:'long', year:'numeric', month:'long', day:'numeric'}) : '-';
         document.getElementById('detailDate').textContent = dateStr;
 
         const timeEl = document.getElementById('detailTimeRow');
@@ -339,11 +426,14 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
+        const startTime = document.getElementById('evStart').value;
+        const endTime = document.getElementById('evEnd').value;
+
         const payload = {
             title,
             date,
-            start_time: document.getElementById('evStart').value || null,
-            end_time: document.getElementById('evEnd').value || null,
+            start_time: startTime ? startTime.substring(0, 5) : null,
+            end_time: endTime ? endTime.substring(0, 5) : null,
             location: document.getElementById('evLocation').value || null,
             description: document.getElementById('evDesc').value || null,
             color: document.querySelector('input[name="evColor"]:checked')?.value || 'blue',
@@ -360,19 +450,30 @@ document.addEventListener('DOMContentLoaded', function () {
 
         fetch(url, {
             method: method,
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+            headers: { 
+                'Content-Type': 'application/json', 
+                'X-CSRF-TOKEN': CSRF,
+                'Accept': 'application/json'
+            },
             body: JSON.stringify(payload),
         })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
+        .then(r => r.json().then(data => ({ status: r.status, ok: r.ok, data })))
+        .then(res => {
+            if (res.ok) {
                 closeModal('eventModalOverlay');
                 calendar.refetchEvents();
             } else {
-                alert('Terjadi kesalahan. Coba lagi.');
+                const errorMsg = res.data.message || 'Terjadi kesalahan. Coba lagi.';
+                alert('Gagal: ' + errorMsg);
+                if (res.data.errors) {
+                    console.error('Validation Errors:', res.data.errors);
+                }
             }
         })
-        .catch(() => alert('Gagal terhubung ke server.'))
+        .catch((err) => {
+            console.error('Fetch error:', err);
+            alert('Gagal terhubung ke server. Silakan muat ulang halaman.');
+        })
         .finally(() => {
             document.getElementById('saveBtnText').style.display = 'inline';
             document.getElementById('saveBtnLoading').style.display = 'none';
@@ -422,12 +523,16 @@ document.addEventListener('DOMContentLoaded', function () {
     // ─── Manage Users (Admin) ───────────────────────────────────────────────
     @if($user->isAdmin())
     const manageBtn = document.getElementById('manageUsersBtn');
-    if (manageBtn) {
-        manageBtn.addEventListener('click', function() {
-            loadEditors();
-            openModal('usersModalOverlay');
-        });
-    }
+    const manageBtnSidebar = document.getElementById('manageUsersBtnSidebar');
+    
+    const openUserManagement = function(e) {
+        if(e) e.preventDefault();
+        loadEditors();
+        openModal('usersModalOverlay');
+    };
+
+    if (manageBtn) manageBtn.addEventListener('click', openUserManagement);
+    if (manageBtnSidebar) manageBtnSidebar.addEventListener('click', openUserManagement);
     document.getElementById('usersModalClose').addEventListener('click', () => closeModal('usersModalOverlay'));
 
     function loadEditors() {

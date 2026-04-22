@@ -25,79 +25,96 @@
 </head>
 <body>
 
-<!-- ─── NAVBAR ─────────────────────────────────────────────────────────────── -->
-<nav class="navbar" id="navbar">
-    <div class="navbar-container">
-        <!-- Logo -->
-        <a href="{{ route('home') }}" class="navbar-brand">
-            <img src="{{ asset('images/logobaru.png') }}" alt="Logo" class="brand-logo-img">
-        </a>
-
-        <!-- Nav Links -->
-        <div class="navbar-links">
-            <a href="{{ route('home') }}" class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}">
-                <i class="fa-solid fa-calendar"></i> Kalender
-            </a>
-            @auth
-            <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                <i class="fa-solid fa-gauge-high"></i> Dashboard
-            </a>
-            @endauth
+@auth
+<div class="app-shell app-shell-active">
+    <!-- ─── APP SIDEBAR ────────────────────────────────────────────────────────── -->
+    <aside class="app-sidebar">
+        <div class="app-sidebar-logo">
+            <img src="{{ asset('images/logobaru.png') }}" alt="Logo">
         </div>
 
-        <!-- Right Side -->
-        <div class="navbar-right">
-            <!-- Dark Mode Toggle -->
-            <button class="theme-toggle" id="themeToggle" title="Toggle Dark Mode" aria-label="Toggle dark mode">
-                <i class="fa-solid fa-sun" id="themeIconLight"></i>
-                <i class="fa-solid fa-moon" id="themeIconDark"></i>
-            </button>
+        <nav class="app-sidebar-nav">
+            <a href="{{ route('home') }}" class="app-sidebar-link {{ request()->routeIs('home') ? 'active' : '' }}">
+                <i class="fa-solid fa-calendar-days"></i>
+                <span>Kalender</span>
+            </a>
+            <a href="{{ route('dashboard') }}" class="app-sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                <i class="fa-solid fa-gauge-high"></i>
+                <span>Dashboard</span>
+            </a>
+            @if(Auth::user()->isAdmin())
+            <a href="#" class="app-sidebar-link" id="manageUsersBtnSidebar">
+                <i class="fa-solid fa-users-gear"></i>
+                <span>Kelola Editor</span>
+            </a>
+            @endif
+        </nav>
 
-            @auth
-            <!-- User Dropdown -->
-            <div class="user-menu" id="userMenu">
-                <button class="user-btn" id="userMenuBtn">
-                    <div class="user-avatar">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</div>
-                    <span class="user-name">{{ Auth::user()->name }}</span>
-                    <span class="user-role-badge role-{{ Auth::user()->role }}">{{ ucfirst(Auth::user()->role) }}</span>
-                    <i class="fa-solid fa-chevron-down user-chevron"></i>
-                </button>
-                <div class="user-dropdown" id="userDropdown">
-                    <div class="dropdown-header">
-                        <span class="dropdown-name">{{ Auth::user()->name }}</span>
-                        <span class="dropdown-email">{{ Auth::user()->email }}</span>
-                    </div>
-                    <div class="dropdown-divider"></div>
-                    <form action="{{ route('logout') }}" method="POST">
-                        @csrf
-                        <button type="submit" class="dropdown-item dropdown-item-danger">
-                            <i class="fa-solid fa-right-from-bracket"></i> Logout
-                        </button>
-                    </form>
+        <div class="app-sidebar-footer">
+            <div class="app-sidebar-user">
+                <div class="app-sidebar-user-avatar">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</div>
+                <div class="app-sidebar-user-info">
+                    <span class="app-sidebar-user-name">{{ Auth::user()->name }}</span>
+                    <span class="app-sidebar-user-role role-{{ Auth::user()->role }}">{{ Auth::user()->role }}</span>
                 </div>
             </div>
-            @else
-            <a href="{{ route('login') }}" class="btn btn-primary btn-sm">
-                <i class="fa-solid fa-lock"></i> Login
-            </a>
-            @endauth
+
+            <div class="theme-toggle-container">
+                <button class="theme-toggle" id="themeToggle" title="Toggle Dark Mode" style="width: 100%; border-radius: 12px;">
+                    <i class="fa-solid fa-sun" id="themeIconLight"></i>
+                    <i class="fa-solid fa-moon" id="themeIconDark"></i>
+                    <span style="margin-left: 0.5rem; font-size: 0.85rem; font-weight: 600;">Tema</span>
+                </button>
+            </div>
+
+            <form action="{{ route('logout') }}" method="POST">
+                @csrf
+                <button type="submit" class="btn btn-danger btn-sm btn-logout-sidebar">
+                    <i class="fa-solid fa-right-from-bracket"></i> Logout
+                </button>
+            </form>
         </div>
+    </aside>
+
+    <div class="app-main">
+@else
+<div class="app-shell app-shell-none">
+    <div class="app-main">
+        <!-- ─── NAVBAR (Guests Only) ──────────────────────────────────────────────── -->
+        <nav class="navbar" id="navbar">
+            <div class="navbar-container">
+                <a href="{{ route('home') }}" class="navbar-brand">
+                    <img src="{{ asset('images/logobaru.png') }}" alt="Logo" class="brand-logo-img">
+                </a>
+
+                <div class="navbar-right">
+                    <button class="theme-toggle" id="themeToggleGuest" title="Toggle Dark Mode">
+                        <i class="fa-solid fa-sun" id="themeIconLightGuest"></i>
+                        <i class="fa-solid fa-moon" id="themeIconDarkGuest"></i>
+                    </button>
+                    <a href="{{ route('login') }}" class="btn btn-primary btn-sm">
+                        <i class="fa-solid fa-lock"></i> Login
+                    </a>
+                </div>
+            </div>
+        </nav>
+@endauth
+
+    <!-- ─── FLASH MESSAGES ──────────────────────────────────────────────────────── -->
+    @if(session('success'))
+    <div class="flash flash-success" id="flashMsg">
+        <i class="fa-solid fa-circle-check"></i>
+        <span>{{ session('success') }}</span>
+        <button onclick="this.parentElement.remove()" class="flash-close"><i class="fa-solid fa-xmark"></i></button>
     </div>
-</nav>
+    @endif
 
-<!-- ─── FLASH MESSAGES ──────────────────────────────────────────────────────── -->
-@if(session('success'))
-<div class="flash flash-success" id="flashMsg">
-    <i class="fa-solid fa-circle-check"></i>
-    <span>{{ session('success') }}</span>
-    <button onclick="this.parentElement.remove()" class="flash-close"><i class="fa-solid fa-xmark"></i></button>
+    <!-- ─── MAIN CONTENT ────────────────────────────────────────────────────────── -->
+    <main class="main-content">
+        @yield('content')
+    </main>
 </div>
-@endif
-
-<!-- ─── MAIN CONTENT ────────────────────────────────────────────────────────── -->
-<main class="main-content">
-    @yield('content')
-</main>
+</div>
 
 <!-- FullCalendar JS -->
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
@@ -107,27 +124,33 @@
 // ─── Dark Mode ─────────────────────────────────────────────────────────────────
 (function() {
     const html = document.documentElement;
-    const btn = document.getElementById('themeToggle');
-    const iconLight = document.getElementById('themeIconLight');
-    const iconDark = document.getElementById('themeIconDark');
     const saved = localStorage.getItem('theme') || 'light';
 
     function applyTheme(theme) {
         html.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
+        
+        // Update all toggle icons (Sidebar & Guest Navbar)
+        const iconsLight = document.querySelectorAll('#themeIconLight, #themeIconLightGuest');
+        const iconsDark = document.querySelectorAll('#themeIconDark, #themeIconDarkGuest');
+        
         if (theme === 'dark') {
-            iconLight.style.display = 'none';
-            iconDark.style.display = 'inline';
+            iconsLight.forEach(i => i.style.display = 'none');
+            iconsDark.forEach(i => i.style.display = 'inline');
         } else {
-            iconLight.style.display = 'inline';
-            iconDark.style.display = 'none';
+            iconsLight.forEach(i => i.style.display = 'inline');
+            iconsDark.forEach(i => i.style.display = 'none');
         }
     }
 
     applyTheme(saved);
-    btn.addEventListener('click', () => {
-        const current = html.getAttribute('data-theme');
-        applyTheme(current === 'dark' ? 'light' : 'dark');
+
+    // Listen to all possible toggle buttons
+    document.querySelectorAll('#themeToggle, #themeToggleGuest').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const current = html.getAttribute('data-theme');
+            applyTheme(current === 'dark' ? 'light' : 'dark');
+        });
     });
 })();
 
