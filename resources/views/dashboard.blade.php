@@ -113,6 +113,17 @@
                         </label>
                     </div>
                 </div>
+
+                <div class="form-group" style="margin-top: 1.5rem;">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="evIsPrivate" name="is_private" value="1">
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label" style="font-weight: 700; color: var(--text-primary);">Event Privat Departemen</span>
+                    </label>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0.25rem 0 0 52px;">
+                        Aktifkan agar hanya rekan satu departemen Anda yang dapat melihat event ini.
+                    </p>
+                </div>
             </form>
         </div>
         <div class="modal-footer">
@@ -144,6 +155,11 @@
         </div>
         <div class="modal-body" id="detailModalBody">
             <div class="event-detail-title" id="detailTitle"></div>
+            <div id="detailPrivateBadge" style="display: none; margin-bottom: 1.5rem;">
+                <span class="badge-role role-admin" style="background: rgba(79, 70, 229, 0.1); color: var(--cal-accent); padding: 0.4rem 0.8rem; font-size: 0.75rem;">
+                    <i class="fa-solid fa-eye-slash"></i> Privat Departemen
+                </span>
+            </div>
             <div class="event-detail-grid">
                 <div class="event-detail-item" id="detailDateRow">
                     <i class="fa-solid fa-calendar-day event-detail-icon"></i>
@@ -187,11 +203,12 @@
         <div class="modal-body">
             <!-- Add Editor Form -->
             <div class="section-card">
-                <h3 class="section-card-title">Tambah Editor Baru</h3>
+                <h3 class="section-card-title" id="editorFormTitle">Tambah Editor Baru</h3>
                 <form id="addEditorForm">
-                    <div class="form-row-3">
+                    <input type="hidden" id="edId">
+                    <div class="form-row-2">
                         <div class="form-group">
-                            <label class="form-label" for="edName">Nama</label>
+                            <label class="form-label" for="edName">Nama Akun (Dept/Orang)</label>
                             <input type="text" id="edName" class="form-input" placeholder="Nama lengkap" required>
                         </div>
                         <div class="form-group">
@@ -200,14 +217,40 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="edPass">Password</label>
-                            <input type="password" id="edPass" class="form-input" placeholder="Min. 8 karakter" required minlength="8">
+                            <input type="password" id="edPass" class="form-input" placeholder="Bebas" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="edDept">Departemen</label>
+                            <select id="edDept" class="form-input" required>
+                                <option value="">-- Pilih Departemen --</option>
+                            </select>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-sm" id="addEditorBtn">
-                        <i class="fa-solid fa-user-plus"></i> Tambah Editor
-                    </button>
+                    <div class="form-actions" style="display: flex; gap: 0.5rem; align-items: center;">
+                        <button type="submit" class="btn btn-primary btn-sm" id="addEditorBtn">
+                            <i class="fa-solid fa-user-plus"></i> Tambah Editor
+                        </button>
+                        <button type="button" class="btn btn-outline btn-sm" id="cancelEditBtn" style="display: none;" onclick="cancelEditUser()">
+                            Batal Edit
+                        </button>
+                    </div>
                 </form>
             </div>
+
+            <!-- Department Master -->
+            <div class="section-card">
+                <h3 class="section-card-title">Data Master Departemen</h3>
+                <form id="addDeptForm" style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                    <input type="text" id="deptName" class="form-input" placeholder="Nama departemen baru..." required>
+                    <button type="submit" class="btn btn-primary btn-sm" id="addDeptBtn">
+                        <i class="fa-solid fa-plus"></i> Tambah
+                    </button>
+                </form>
+                <div id="deptList" class="user-list" style="max-height: 200px; overflow-y: auto;">
+                    <!-- Loaded via JS -->
+                </div>
+            </div>
+
             <!-- Editor List -->
             <div class="section-card">
                 <h3 class="section-card-title">Daftar Editor</h3>
@@ -388,6 +431,9 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('detailCreatorRow').style.display = '';
         } else { document.getElementById('detailCreatorRow').style.display = 'none'; }
 
+        // Private Badge
+        document.getElementById('detailPrivateBadge').style.display = props.department_id ? 'block' : 'none';
+
         openModal('detailModalOverlay');
     }
 
@@ -407,6 +453,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('evDesc').value = event.description || '';
                 const radio = document.querySelector(`input[name="evColor"][value="${event.color}"]`);
                 if (radio) radio.checked = true;
+                document.getElementById('evIsPrivate').checked = !!event.department_id;
 
                 document.getElementById('eventModalTitle').textContent = 'Edit Event';
                 const deleteBtn = document.getElementById('deleteEventBtn');
@@ -437,6 +484,7 @@ document.addEventListener('DOMContentLoaded', function () {
             location: document.getElementById('evLocation').value || null,
             description: document.getElementById('evDesc').value || null,
             color: document.querySelector('input[name="evColor"]:checked')?.value || 'blue',
+            is_private: document.getElementById('evIsPrivate').checked ? 1 : 0,
             _token: CSRF,
         };
 
@@ -527,6 +575,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
     const openUserManagement = function(e) {
         if(e) e.preventDefault();
+        loadDepartments();
         loadEditors();
         openModal('usersModalOverlay');
     };
@@ -552,14 +601,82 @@ document.addEventListener('DOMContentLoaded', function () {
                             <strong>${u.name}</strong>
                             <span>${u.email}</span>
                         </div>
-                        <span class="badge-role role-editor">Editor</span>
-                        <button class="btn btn-danger btn-xs" onclick="removeEditor(${u.id})">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
+                        <div style="text-align: right; margin-right: 1rem;">
+                            <span class="badge-role role-editor" style="display: block; margin-bottom: 2px;">Editor</span>
+                            <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">
+                                ${u.department ? u.department.name : 'No Dept'}
+                            </span>
+                        </div>
+                        <div style="display: flex; gap: 0.4rem;">
+                            <button class="btn btn-outline btn-xs" onclick='editUser(${JSON.stringify(u)})'>
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button class="btn btn-danger btn-xs" onclick="removeEditor(${u.id})">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
                     </div>
                 `).join('');
             });
     }
+
+    // ─── Department Management Logic ──────────────────────────────────────────
+    function loadDepartments() {
+        const list = document.getElementById('deptList');
+        const select = document.getElementById('edDept');
+        
+        fetch('/api/admin/departments')
+            .then(r => r.json())
+            .then(depts => {
+                // Update Master List
+                list.innerHTML = depts.map(d => `
+                    <div class="user-list-item" style="padding: 0.5rem 1rem;">
+                        <div class="user-list-info"><strong>${d.name}</strong></div>
+                        <button class="btn btn-danger btn-xs" onclick="removeDepartment(${d.id})">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                `).join('');
+
+                // Update Dropdown in Editor Form
+                const currentVal = select.value;
+                select.innerHTML = '<option value="">-- Pilih Departemen --</option>' + 
+                    depts.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+                select.value = currentVal;
+            });
+    }
+
+    window.removeDepartment = function(id) {
+        if(!confirm('Hapus departemen ini?')) return;
+        fetch('/api/admin/departments/' + id, {
+            method: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': CSRF }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if(data.success) loadDepartments();
+            else alert(data.error || 'Gagal menghapus departemen.');
+        });
+    };
+
+    document.getElementById('addDeptForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const input = document.getElementById('deptName');
+        fetch('/api/admin/departments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+            body: JSON.stringify({ name: input.value })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if(data.success) {
+                input.value = '';
+                loadDepartments();
+            } else {
+                alert('Gagal menambah departemen.');
+            }
+        });
+    });
 
     window.removeEditor = function(id) {
         if (!confirm('Yakin hapus editor ini?')) return;
@@ -577,28 +694,31 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.getElementById('addEditorForm').addEventListener('submit', function(e) {
         e.preventDefault();
+        const id = document.getElementById('edId').value;
         const btn = document.getElementById('addEditorBtn');
         btn.disabled = true;
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
 
-        fetch('/api/admin/users', {
-            method: 'POST',
+        const url = id ? `/api/admin/users/${id}` : '/api/admin/users';
+        const method = id ? 'PUT' : 'POST';
+
+        fetch(url, {
+            method: method,
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
             body: JSON.stringify({
-                name:     document.getElementById('edName').value,
-                email:    document.getElementById('edEmail').value,
-                password: document.getElementById('edPass').value,
+                name:            document.getElementById('edName').value,
+                email:           document.getElementById('edEmail').value,
+                password:        document.getElementById('edPass').value,
+                department_id:   document.getElementById('edDept').value,
             })
         })
         .then(r => r.json())
         .then(data => {
             if (data.success) {
-                document.getElementById('edName').value = '';
-                document.getElementById('edEmail').value = '';
-                document.getElementById('edPass').value = '';
+                cancelEditUser();
                 loadEditors();
             } else {
-                alert('Gagal menambah editor: ' + (data.message || 'Cek data kembali.'));
+                alert('Gagal menyimpan editor: ' + (data.message || 'Cek data kembali.'));
             }
         })
         .finally(() => {
@@ -606,6 +726,34 @@ document.addEventListener('DOMContentLoaded', function () {
             btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Tambah Editor';
         });
     });
+
+    window.editUser = function(u) {
+        document.getElementById('edId').value = u.id;
+        document.getElementById('edName').value = u.name;
+        document.getElementById('edEmail').value = u.email;
+        document.getElementById('edDept').value = u.department ? u.department.id : '';
+        document.getElementById('edPass').value = '';
+        document.getElementById('edPass').required = false; // Pass optional on edit
+        document.getElementById('edPass').placeholder = 'Kosongkan jika tidak ganti';
+
+        document.getElementById('editorFormTitle').textContent = 'Edit Akun Editor';
+        document.getElementById('addEditorBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan';
+        document.getElementById('cancelEditBtn').style.display = 'block';
+    };
+
+    window.cancelEditUser = function() {
+        document.getElementById('edId').value = '';
+        document.getElementById('edName').value = '';
+        document.getElementById('edEmail').value = '';
+        document.getElementById('edPass').value = '';
+        document.getElementById('edDept').value = '';
+        document.getElementById('edPass').required = true;
+        document.getElementById('edPass').placeholder = 'Bebas';
+
+        document.getElementById('editorFormTitle').textContent = 'Tambah Editor Baru';
+        document.getElementById('addEditorBtn').innerHTML = '<i class="fa-solid fa-user-plus"></i> Tambah Editor';
+        document.getElementById('cancelEditBtn').style.display = 'none';
+    };
     @endif
 
     // ─── Reset Form ────────────────────────────────────────────────────────────
@@ -618,6 +766,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('evLocation').value = '';
         document.getElementById('evDesc').value = '';
         document.querySelector('input[name="evColor"][value="blue"]').checked = true;
+        document.getElementById('evIsPrivate').checked = false;
     }
 });
 </script>

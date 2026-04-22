@@ -28,9 +28,17 @@
 @auth
 <div class="app-shell app-shell-active">
     <!-- ─── APP SIDEBAR ────────────────────────────────────────────────────────── -->
-    <aside class="app-sidebar">
-        <div class="app-sidebar-logo">
-            <img src="{{ asset('images/logobaru.png') }}" alt="Logo">
+    <aside class="app-sidebar" id="appSidebar">
+        <div class="app-sidebar-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; gap: 0.5rem;">
+            <div class="app-sidebar-logo" style="display: flex; align-items: center; gap: 0.8rem; flex: 1; overflow: hidden; padding: 0;">
+                <img src="{{ asset('images/logobaru.png') }}" alt="Logo" style="height: 32px; flex-shrink: 0;">
+                <span class="brand-text" style="font-weight: 800; font-size: 0.9rem; color: var(--cal-accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    {{ config('app.name', 'Kalender') }}
+                </span>
+            </div>
+            <button id="sidebarToggle" style="background: var(--bg-surface); border: 1px solid var(--border-color); cursor: pointer; color: var(--text-primary); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i class="fa-solid fa-bars-staggered"></i>
+            </button>
         </div>
 
         <nav class="app-sidebar-nav">
@@ -45,7 +53,7 @@
             @if(Auth::user()->isAdmin())
             <a href="#" class="app-sidebar-link" id="manageUsersBtnSidebar">
                 <i class="fa-solid fa-users-gear"></i>
-                <span>Kelola Editor</span>
+                <span>Kelola Akun</span>
             </a>
             @endif
         </nav>
@@ -55,7 +63,9 @@
                 <div class="app-sidebar-user-avatar">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</div>
                 <div class="app-sidebar-user-info">
                     <span class="app-sidebar-user-name">{{ Auth::user()->name }}</span>
-                    <span class="app-sidebar-user-role role-{{ Auth::user()->role }}">{{ Auth::user()->role }}</span>
+                    <span class="app-sidebar-user-role role-{{ Auth::user()->role }}">
+                        {{ Auth::user()->department ? Auth::user()->department->name : ucfirst(Auth::user()->role) }}
+                    </span>
                 </div>
             </div>
 
@@ -63,14 +73,14 @@
                 <button class="theme-toggle" id="themeToggle" title="Toggle Dark Mode" style="width: 100%; border-radius: 12px;">
                     <i class="fa-solid fa-sun" id="themeIconLight"></i>
                     <i class="fa-solid fa-moon" id="themeIconDark"></i>
-                    <span style="margin-left: 0.5rem; font-size: 0.85rem; font-weight: 600;">Tema</span>
+                    <span style="margin-left: 0.5rem; font-size: 0.85rem; font-weight: 600;" class="theme-label">Tema</span>
                 </button>
             </div>
 
             <form action="{{ route('logout') }}" method="POST">
                 @csrf
-                <button type="submit" class="btn btn-danger btn-sm btn-logout-sidebar">
-                    <i class="fa-solid fa-right-from-bracket"></i> Logout
+                <button type="submit" class="btn btn-danger btn-sm btn-logout-sidebar" style="width: 100%; justify-content: center;">
+                    <i class="fa-solid fa-right-from-bracket"></i> <span class="logout-label">Logout</span>
                 </button>
             </form>
         </div>
@@ -171,6 +181,27 @@ if (flash) {
     setTimeout(() => flash.style.opacity = '0', 4000);
     setTimeout(() => flash.remove(), 4500);
 }
+
+// ─── Sidebar Toggle ──────────────────────────────────────────────────────────
+(function() {
+    const shell = document.querySelector('.app-shell');
+    const toggleBtn = document.getElementById('sidebarToggle');
+    if (!shell || !toggleBtn) return;
+
+    // Load state
+    const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+    if (isCollapsed) shell.classList.add('collapsed');
+
+    toggleBtn.addEventListener('click', () => {
+        shell.classList.toggle('collapsed');
+        localStorage.setItem('sidebar-collapsed', shell.classList.contains('collapsed'));
+        
+        // Trigger resize for FullCalendar
+        setTimeout(() => {
+            window.dispatchEvent(new Event('resize'));
+        }, 300);
+    });
+})();
 
 // ─── Navbar scroll shadow ─────────────────────────────────────────────────────
 window.addEventListener('scroll', () => {

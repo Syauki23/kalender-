@@ -17,12 +17,18 @@ class Event extends Model
         'end_time',
         'location',
         'color',
+        'department_id',
         'created_by',
     ];
 
     protected $casts = [
         'date' => 'date',
     ];
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
 
     public function creator()
     {

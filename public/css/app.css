@@ -375,6 +375,11 @@ body {
     to   { transform: translateX(0);    opacity: 1; }
 }
 
+:root {
+    --side-nav-width-full: 280px;
+    --side-nav-width-collapsed: 85px;
+}
+
 /* ─── APP SHELL LAYOUT ───────────────────────────────────────────────────────── */
 .app-shell {
     display: flex;
@@ -383,7 +388,7 @@ body {
 }
 
 .app-sidebar {
-    width: var(--side-nav-width);
+    width: var(--side-nav-width-full);
     background: var(--side-nav-bg);
     border-right: 1px solid var(--border-color);
     display: flex;
@@ -394,7 +399,48 @@ body {
     top: 0;
     z-index: 1000;
     padding: 1.5rem;
-    transition: var(--transition);
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s;
+    overflow: hidden;
+}
+
+.app-shell.collapsed .app-sidebar {
+    width: var(--side-nav-width-collapsed);
+    padding: 1.5rem 1rem;
+}
+
+.app-main {
+    flex: 1;
+    margin-left: var(--side-nav-width-full);
+    min-width: 0;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.app-shell.collapsed .app-main {
+    margin-left: var(--side-nav-width-collapsed);
+}
+
+/* Hide text in collapsed mode */
+.app-shell.collapsed .app-sidebar-link span,
+.app-shell.collapsed .app-sidebar-user-info,
+.app-shell.collapsed .app-sidebar-logo span,
+.app-shell.collapsed .brand-text,
+.app-shell.collapsed .theme-label,
+.app-shell.collapsed .logout-label {
+    display: none;
+}
+
+.app-shell.collapsed .app-sidebar-link {
+    justify-content: center;
+    padding: 0.85rem;
+}
+
+#sidebarToggle {
+    transition: all 0.2s;
+}
+#sidebarToggle:hover {
+    background: var(--cal-accent) !important;
+    color: #fff !important;
+    border-color: var(--cal-accent) !important;
 }
 
 .app-sidebar-logo {

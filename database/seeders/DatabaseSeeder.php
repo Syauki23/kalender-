@@ -11,21 +11,32 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // ─── Buat Departemen ───────────────────────────────────────────────────
+        $this->call(DepartmentSeeder::class);
+        $itDept = \App\Models\Department::where('slug', 'it-teknologi')->first();
+        $legalDept = \App\Models\Department::where('slug', 'legal-compliance')->first();
+
         // ─── Buat Admin ────────────────────────────────────────────────────────
-        $admin = User::create([
-            'name'     => 'Administrator',
-            'email'    => 'admin@kalender.com',
-            'password' => Hash::make('admin123'),
-            'role'     => 'admin',
-        ]);
+        $admin = User::updateOrCreate(
+            ['email' => 'admin@kalender.com'],
+            [
+                'name'          => 'Administrator',
+                'password'      => Hash::make('admin123'),
+                'role'          => 'admin',
+                'department_id' => $legalDept?->id,
+            ]
+        );
 
         // ─── Buat Editor ───────────────────────────────────────────────────────
-        $editor = User::create([
-            'name'     => 'Budi Editor',
-            'email'    => 'editor@kalender.com',
-            'password' => Hash::make('editor123'),
-            'role'     => 'editor',
-        ]);
+        $editor = User::updateOrCreate(
+            ['email' => 'it@kalender.com'],
+            [
+                'name'          => 'IT Department',
+                'password'      => Hash::make('it123'),
+                'role'          => 'editor',
+                'department_id' => $itDept?->id,
+            ]
+        );
 
         // ─── Buat Sample Events ────────────────────────────────────────────────
         $sampleEvents = [
@@ -92,7 +103,10 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($sampleEvents as $event) {
-            Event::create($event);
+            Event::updateOrCreate(
+                ['title' => $event['title'], 'date' => $event['date']],
+                $event
+            );
         }
     }
 }

@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+use App\Models\Department;
+
 class DashboardController extends Controller
 {
     public function index()
@@ -13,7 +15,9 @@ class DashboardController extends Controller
             return redirect()->route('login');
         }
 
-        $user = Auth::user();
-        return view('dashboard', compact('user'));
+        $user = Auth::user()->load('department');
+        $departments = Department::orderBy('name')->get();
+        
+        return view('dashboard', compact('user', 'departments'));
     }
 }

@@ -9,9 +9,25 @@ use Illuminate\Support\Facades\Auth;
 class EventController extends Controller
 {
     // Ambil semua event (untuk FullCalendar via JSON)
-    public function index()
+    public function index(Request $request)
     {
-        $events = Event::with('creator:id,name')->get()->map(function ($event) {
+        $user  = Auth::user();
+        $query = Event::with('creator:id,name');
+
+        // Visibility Logic
+        if (!$user) {
+            // Guest hanya bisa lihat event publik (department_id IS NULL)
+            $query->whereNull('department_id');
+        } elseif (!$user->isAdmin()) {
+            // Editor hanya bisa lihat event publik ATAU event milik departemennya
+            $query->where(function($q) use ($user) {
+                $q->whereNull('department_id')
+                  ->orWhere('department_id', $user->department_id);
+            });
+        }
+        // Admin bisa lihat semuanya
+
+        $events = $query->get()->map(function ($event) {
             return [
                 'id'          => $event->id,
                 'title'       => $event->title,
@@ -26,6 +42,7 @@ class EventController extends Controller
                     'end_time'    => $event->end_time,
                     'creator'     => $event->creator?->name,
                     'created_by'  => $event->created_by,
+                    'department_id' => $event->department_id,
                 ],
             ];
         });
@@ -46,11 +63,22 @@ class EventController extends Controller
             'end_time'    => 'nullable|regex:/^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$/',
             'location'    => 'nullable|string|max:255',
             'color'       => 'required|in:blue,green,orange,red,yellow',
+            'is_private'  => 'nullable|boolean',
         ]);
 
+        $isPrivate = $request->input('is_private') == 1 || $request->input('is_private') === true;
+        $deptId = ($isPrivate && Auth::user()->department_id) ? Auth::user()->department_id : null;
+
         $event = Event::create([
-            ...$validated,
-            'created_by' => Auth::id(),
+            'title'         => $validated['title'],
+            'description'   => $validated['description'],
+            'date'          => $validated['date'],
+            'start_time'    => $validated['start_time'],
+            'end_time'      => $validated['end_time'],
+            'location'      => $validated['location'],
+            'color'         => $validated['color'],
+            'department_id' => $deptId,
+            'created_by'    => Auth::id(),
         ]);
 
         return response()->json(['success' => true, 'event' => $event], 201);
@@ -75,9 +103,22 @@ class EventController extends Controller
             'end_time'    => 'nullable|regex:/^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$/',
             'location'    => 'nullable|string|max:255',
             'color'       => 'required|in:blue,green,orange,red,yellow',
+            'is_private'  => 'nullable|boolean',
         ]);
 
-        $event->update($validated);
+        $isPrivate = $request->input('is_private') == 1 || $request->input('is_private') === true;
+        $deptId = ($isPrivate && Auth::user()->department_id) ? Auth::user()->department_id : null;
+
+        $event->update([
+            'title'         => $validated['title'],
+            'description'   => $validated['description'],
+            'date'          => $validated['date'],
+            'start_time'    => $validated['start_time'],
+            'end_time'      => $validated['end_time'],
+            'location'      => $validated['location'],
+            'color'         => $validated['color'],
+            'department_id' => $deptId,
+        ]);
 
         return response()->json(['success' => true, 'event' => $event]);
     }

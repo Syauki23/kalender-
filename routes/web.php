@@ -29,9 +29,16 @@ Route::prefix('api')->name('api.')->group(function () {
     Route::delete('/events/{event}', [EventController::class, 'destroy'])->name('events.destroy');
 });
 
-// ─── Admin API (User Management) ───────────────────────────────────────────────
+// ─── Admin API (Management) ────────────────────────────────────────────────────
 Route::prefix('api/admin')->name('api.admin.')->group(function () {
+    // Departments
+    Route::get('/departments',           [AdminController::class, 'departments'])->name('departments.index');
+    Route::post('/departments',          [AdminController::class, 'addDepartment'])->name('departments.store');
+    Route::delete('/departments/{department}', [AdminController::class, 'removeDepartment'])->name('departments.destroy');
+
+    // Users
     Route::get('/users',           [AdminController::class, 'users'])->name('users.index');
     Route::post('/users',          [AdminController::class, 'addUser'])->name('users.store');
+    Route::put('/users/{user}',    [AdminController::class, 'updateUser'])->name('users.update');
     Route::delete('/users/{user}', [AdminController::class, 'removeUser'])->name('users.destroy');
 });
