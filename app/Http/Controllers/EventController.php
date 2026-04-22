@@ -43,6 +43,7 @@ class EventController extends Controller
                     'creator' => $event->creator?->name,
                     'created_by' => $event->created_by,
                     'department_id' => $event->department_id,
+                    'wa_schedule_time' => $event->wa_schedule_time ? $event->wa_schedule_time->format('Y-m-d\TH:i') : null,
                 ],
             ];
         });
@@ -66,6 +67,7 @@ class EventController extends Controller
             'color' => 'required|in:blue,green,orange,red,yellow',
             'is_private' => 'nullable|boolean',
             'department_id' => 'nullable|exists:departments,id',
+            'wa_schedule_time' => 'nullable|date_format:Y-m-d\TH:i',
         ]);
 
         $isPrivate = $request->input('is_private') == 1 || $request->input('is_private') === true;
@@ -89,7 +91,10 @@ class EventController extends Controller
             'color' => $validated['color'],
             'department_id' => $deptId,
             'created_by' => Auth::id(),
+            'wa_schedule_time' => $request->input('wa_schedule_time'),
         ]);
+
+        $this->scheduleFonnteNotification($event);
 
         return response()->json(['success' => true, 'event' => $event], 201);
     }
@@ -120,6 +125,7 @@ class EventController extends Controller
             'color' => 'required|in:blue,green,orange,red,yellow',
             'is_private' => 'nullable|boolean',
             'department_id' => 'nullable|exists:departments,id',
+            'wa_schedule_time' => 'nullable|date_format:Y-m-d\TH:i',
         ]);
 
         $isPrivate = $request->input('is_private') == 1 || $request->input('is_private') === true;
@@ -142,7 +148,10 @@ class EventController extends Controller
             'location' => $validated['location'],
             'color' => $validated['color'],
             'department_id' => $deptId,
+            'wa_schedule_time' => $request->input('wa_schedule_time'),
         ]);
+
+        $this->scheduleFonnteNotification($event);
 
         return response()->json(['success' => true, 'event' => $event]);
     }
@@ -177,6 +186,36 @@ class EventController extends Controller
     {
         if (!Auth::check()) {
             abort(401, 'Unauthorized');
+        }
+    }
+
+    private function scheduleFonnteNotification(Event $event)
+    {
+        if (!$event->wa_schedule_time) return;
+
+        $token = env('FONNTE_TOKEN');
+        if (!$token) return;
+
+        $dept = \App\Models\Department::with('whatsappContacts')->find($event->department_id);
+        if (!$dept || $dept->whatsappContacts->isEmpty()) return;
+
+        $phones = $dept->whatsappContacts->pluck('phone')->toArray();
+        $target = implode(',', $phones);
+
+        $message = "Halo, Pengingat Acara:\n\n*{$event->title}*\nTanggal: " . $event->date->format('d M Y') . "\nWaktu: " . ($event->start_time ? substr($event->start_time, 0, 5) : 'TBA') . "\nLokasi: " . ($event->location ?: 'TBA') . "\n\nTerima kasih.";
+
+        $timestamp = $event->wa_schedule_time->timestamp;
+
+        try {
+            \Illuminate\Support\Facades\Http::withHeaders([
+                'Authorization' => $token,
+            ])->post('https://api.fonnte.com/send', [
+                'target'  => $target,
+                'message' => $message,
+                'schedule' => $timestamp
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Fonnte Schedule Error: " . $e->getMessage());
         }
     }
 }

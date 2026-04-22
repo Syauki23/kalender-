@@ -72,6 +72,12 @@
                 <span>Kelola Akun</span>
             </a>
             @endif
+            @if(Auth::user()->canManageGlobal())
+            <a href="{{ route('whatsapp-contacts.view') }}" class="app-sidebar-link {{ request()->routeIs('whatsapp-contacts.*') ? 'active' : '' }}">
+                <i class="fa-brands fa-whatsapp"></i>
+                <span>Kontak WA (Per DPT)</span>
+            </a>
+            @endif
 
         </nav>
 

@@ -41,4 +41,15 @@ Route::prefix('api/admin')->name('api.admin.')->group(function () {
     Route::post('/users',          [AdminController::class, 'addUser'])->name('users.store');
     Route::put('/users/{user}',    [AdminController::class, 'updateUser'])->name('users.update');
     Route::delete('/users/{user}', [AdminController::class, 'removeUser'])->name('users.destroy');
+
+    // WhatsApp Contacts
+    Route::get('/departments/{department}/whatsapp-contacts', [App\Http\Controllers\WhatsappContactController::class, 'getContacts'])->name('whatsapp-contacts.index');
+    Route::post('/whatsapp-contacts',          [App\Http\Controllers\WhatsappContactController::class, 'store'])->name('whatsapp-contacts.store');
+    Route::put('/whatsapp-contacts/{contact}', [App\Http\Controllers\WhatsappContactController::class, 'update'])->name('whatsapp-contacts.update');
+    Route::delete('/whatsapp-contacts/{contact}', [App\Http\Controllers\WhatsappContactController::class, 'destroy'])->name('whatsapp-contacts.destroy');
+});
+
+// ─── Web Views for Contacts ────────────────────────────────────────────────────
+Route::middleware('auth')->group(function () {
+    Route::get('/whatsapp-contacts', [App\Http\Controllers\WhatsappContactController::class, 'index'])->name('whatsapp-contacts.view');
 });

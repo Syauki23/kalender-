@@ -20,4 +20,9 @@ class Department extends Model
     {
         return $this->hasMany(Event::class);
     }
+
+    public function whatsappContacts()
+    {
+        return $this->hasMany(WhatsappContact::class);
+    }
 }

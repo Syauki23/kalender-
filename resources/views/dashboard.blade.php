@@ -127,6 +127,14 @@
                     </p>
                 </div>
 
+                <div class="form-group" style="margin-top: 1.5rem; background: rgba(37, 211, 102, 0.05); border: 1px solid rgba(37, 211, 102, 0.2); padding: 1rem; border-radius: 12px;">
+                    <label class="form-label" style="color: #128c7e;" for="evWaSchedule"><i class="fa-brands fa-whatsapp"></i> Waktu Kirim Pengingat WA (Opsional)</label>
+                    <input type="datetime-local" id="evWaSchedule" class="form-input" style="margin-top: 0.5rem;">
+                    <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem;">
+                        <i class="fa-solid fa-circle-info"></i> Kosongkan jika tidak ingin mengirim pengingat. Notifikasi akan dijadwalkan otomatis oleh server Fonnte ke kontak departemen terkait.
+                    </p>
+                </div>
+
                 @if($user->canManageGlobal())
                 <div class="form-group" id="evDeptGroup" style="display: none; margin-left: 52px; margin-top: 0.5rem; background: var(--bg-surface-2); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-color);">
                     <label class="form-label" for="evDeptId" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Pilih Departemen Tujuan</label>
@@ -337,7 +345,11 @@ document.addEventListener('DOMContentLoaded', function () {
         events: '/api/events',
         eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
         dateClick: function(info) {
-            resetForm();
+            document.getElementById('eventForm').reset();
+            document.getElementById('eventId').value = '';
+            document.getElementById('evWaSchedule').value = '';
+            if(document.getElementById('evDeptGroup')) document.getElementById('evDeptGroup').style.display = 'none';
+
             document.getElementById('evDate').value = info.dateStr;
             document.getElementById('eventModalTitle').textContent = 'Tambah Event';
             const deleteBtn = document.getElementById('deleteEventBtn');
@@ -497,6 +509,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 }
 
+                document.getElementById('evWaSchedule').value = event.wa_schedule_time || '';
+
                 document.getElementById('eventModalTitle').textContent = 'Edit Event';
                 const deleteBtn = document.getElementById('deleteEventBtn');
                 if (deleteBtn) {
@@ -531,6 +545,7 @@ document.addEventListener('DOMContentLoaded', function () {
             color: document.querySelector('input[name="evColor"]:checked')?.value || 'blue',
             is_private: document.getElementById('evIsPrivate').checked ? 1 : 0,
             department_id: document.getElementById('evDeptId') ? document.getElementById('evDeptId').value : null,
+            wa_schedule_time: document.getElementById('evWaSchedule').value || null,
             _token: CSRF,
         };
 
@@ -600,7 +615,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ─── Add Event Button ─────────────────────────────────────────────────────
     document.getElementById('addEventBtn').addEventListener('click', function() {
-        resetForm();
+        document.getElementById('eventForm').reset();
+        document.getElementById('eventId').value = '';
+        document.getElementById('evWaSchedule').value = '';
+        if(document.getElementById('evDeptGroup')) document.getElementById('evDeptGroup').style.display = 'none';
+
         document.getElementById('evDate').value = new Date().toISOString().split('T')[0];
         document.getElementById('eventModalTitle').textContent = 'Tambah Event';
         const delBtn = document.getElementById('deleteEventBtn');

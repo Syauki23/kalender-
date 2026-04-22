@@ -19,10 +19,12 @@ class Event extends Model
         'color',
         'department_id',
         'created_by',
+        'wa_schedule_time',
     ];
 
     protected $casts = [
         'date' => 'date',
+        'wa_schedule_time' => 'datetime',
     ];
 
     public function department()
