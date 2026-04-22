@@ -18,17 +18,24 @@ class AdminController extends Controller
         }
     }
 
+    private function requireGlobal()
+    {
+        if (!Auth::check() || !Auth::user()->canManageGlobal()) {
+            abort(403, 'Akses ditolak.');
+        }
+    }
+
     // ─── DEPARTMENTS ─────────────────────────────────────────────────────────
     
     public function departments()
     {
-        $this->requireAdmin();
+        $this->requireGlobal();
         return response()->json(Department::orderBy('name')->get());
     }
 
     public function addDepartment(Request $request)
     {
-        $this->requireAdmin();
+        $this->requireGlobal();
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:departments,name',
         ]);
@@ -43,7 +50,7 @@ class AdminController extends Controller
 
     public function removeDepartment(Department $department)
     {
-        $this->requireAdmin();
+        $this->requireGlobal();
         if ($department->users()->count() > 0) {
             return response()->json(['error' => 'Tidak bisa menghapus: Masih ada akun yang terdaftar di departemen ini.'], 422);
         }
@@ -56,7 +63,7 @@ class AdminController extends Controller
     public function users()
     {
         $this->requireAdmin();
-        $users = User::with('department')->where('role', 'editor')->orderBy('name')->get();
+        $users = User::with('department')->whereIn('role', ['editor', 'user'])->orderBy('name')->get();
         return response()->json($users->map(fn($u) => [
             'id'    => $u->id,
             'name'  => $u->name,
@@ -75,6 +82,7 @@ class AdminController extends Controller
             'username'      => 'required|string|max:255|unique:users,username',
             'email'         => 'required|email|unique:users,email',
             'password'      => 'required|string',
+            'role'          => 'required|in:editor,user',
             'department_id' => 'required|exists:departments,id',
         ]);
 
@@ -83,7 +91,7 @@ class AdminController extends Controller
             'username'      => $validated['username'],
             'email'         => $validated['email'],
             'password'      => Hash::make($validated['password']),
-            'role'          => 'editor',
+            'role'          => $validated['role'],
             'department_id' => $validated['department_id'],
         ]);
 
@@ -102,6 +110,7 @@ class AdminController extends Controller
             'username'      => 'required|string|max:255|unique:users,username,' . $user->id,
             'email'         => 'required|email|unique:users,email,' . $user->id,
             'password'      => 'nullable|string',
+            'role'          => 'required|in:editor,user',
             'department_id' => 'required|exists:departments,id',
         ]);
 
@@ -109,6 +118,7 @@ class AdminController extends Controller
             'name'          => $validated['name'],
             'username'      => $validated['username'],
             'email'         => $validated['email'],
+            'role'          => $validated['role'],
             'department_id' => $validated['department_id'],
         ];
 

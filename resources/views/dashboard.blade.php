@@ -26,6 +26,8 @@
                     <button class="btn btn-sidebar" id="addEventBtn">
                         <i class="fa-solid fa-plus"></i> Tambah Event
                     </button>
+                    @if($user->canManageGlobal())
+                    @endif
                 </div>
 
                 <!-- Agenda List Section -->
@@ -228,6 +230,16 @@
                             <select id="edDept" class="form-input" required>
                                 <option value="">-- Pilih Departemen --</option>
                             </select>
+                        </div>
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="edIsGlobal" checked>
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label" style="font-weight: 700; color: var(--text-primary);">Berikan Akses Global (Editor)</span>
+                            </label>
+                            <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; margin-left: 52px;">
+                                Jika aktif, user bisa melihat semua event dan membuat event untuk departemen mana saja. Jika mati, user hanya bisa melihat event miliknya & umum (Akun Dept).
+                            </p>
                         </div>
                     </div>
                     <div class="form-actions" style="display: flex; gap: 0.5rem; align-items: center;">
@@ -586,7 +598,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (manageBtn) manageBtn.addEventListener('click', openUserManagement);
     if (manageBtnSidebar) manageBtnSidebar.addEventListener('click', openUserManagement);
+    
+    const manageDeptBtnApp = document.getElementById('manageDeptBtnSidebarApp');
+    if (manageDeptBtnApp) {
+        manageDeptBtnApp.onclick = (e) => {
+            e.preventDefault();
+            loadDepartments();
+            openModal('deptModalOverlay');
+        };
+    }
+
     document.getElementById('usersModalClose').addEventListener('click', () => closeModal('usersModalOverlay'));
+
+    // Auto-fill email from username
+    document.getElementById('edUsername').addEventListener('input', function() {
+        const username = this.value.trim().toLowerCase().replace(/\s+/g, '');
+        if (username) {
+            document.getElementById('edEmail').value = username + '@kalender.com';
+        }
+    });
 
     function loadEditors() {
         const list = document.getElementById('editorList');
@@ -607,7 +637,9 @@ document.addEventListener('DOMContentLoaded', function () {
                             <span>${u.email}</span>
                         </div>
                         <div style="text-align: right; margin-right: 1rem;">
-                            <span class="badge-role role-editor" style="display: block; margin-bottom: 2px;">Editor</span>
+                            <span class="badge-role role-${u.role}" style="display: block; margin-bottom: 2px;">
+                                ${u.role === 'admin' ? 'Admin' : (u.role === 'editor' ? 'Editor' : 'Akun Dept')}
+                            </span>
                             <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">
                                 ${u.department ? u.department.name : 'No Dept'}
                             </span>
@@ -715,6 +747,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 username:        document.getElementById('edUsername').value,
                 email:           document.getElementById('edEmail').value,
                 password:        document.getElementById('edPass').value,
+                role:            document.getElementById('edIsGlobal').checked ? 'editor' : 'user',
                 department_id:   document.getElementById('edDept').value,
             })
         })
@@ -738,6 +771,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('edName').value = u.name;
         document.getElementById('edUsername').value = u.username;
         document.getElementById('edEmail').value = u.email;
+        document.getElementById('edIsGlobal').checked = u.role === 'editor';
         document.getElementById('edDept').value = u.department ? u.department.id : '';
         document.getElementById('edPass').value = '';
         document.getElementById('edPass').required = false; // Pass optional on edit
@@ -754,6 +788,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('edUsername').value = '';
         document.getElementById('edEmail').value = '';
         document.getElementById('edPass').value = '';
+        document.getElementById('edIsGlobal').checked = true;
         document.getElementById('edDept').value = '';
         document.getElementById('edPass').required = true;
         document.getElementById('edPass').placeholder = 'Bebas';

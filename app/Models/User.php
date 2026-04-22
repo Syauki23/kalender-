@@ -55,4 +55,14 @@ class User extends Authenticatable
     {
         return $this->role === 'editor';
     }
+
+    public function isUser(): bool
+    {
+        return $this->role === 'user';
+    }
+
+    public function canManageGlobal(): bool
+    {
+        return $this->isAdmin() || $this->isEditor();
+    }
 }

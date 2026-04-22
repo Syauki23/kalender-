@@ -18,14 +18,14 @@ class EventController extends Controller
         if (!$user) {
             // Guest hanya bisa lihat event publik (department_id IS NULL)
             $query->whereNull('department_id');
-        } elseif (!$user->isAdmin()) {
-            // Editor hanya bisa lihat event publik ATAU event milik departemennya
+        } elseif (!$user->canManageGlobal()) {
+            // Role 'user' (Akun Dept) hanya bisa lihat event publik ATAU event miliknya sendiri
             $query->where(function ($q) use ($user) {
                 $q->whereNull('department_id')
-                    ->orWhere('department_id', $user->department_id);
+                    ->orWhere('created_by', $user->id);
             });
         }
-        // Admin bisa lihat semuanya
+        // Admin & Editor (canManageGlobal) bisa lihat semuanya
 
         $events = $query->get()->map(function ($event) {
             return [
@@ -54,6 +54,7 @@ class EventController extends Controller
     public function store(Request $request)
     {
         $this->requireAuth();
+        $user = Auth::user();
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -64,10 +65,19 @@ class EventController extends Controller
             'location' => 'nullable|string|max:255',
             'color' => 'required|in:blue,green,orange,red,yellow',
             'is_private' => 'nullable|boolean',
+            'department_id' => 'nullable|exists:departments,id',
         ]);
 
         $isPrivate = $request->input('is_private') == 1 || $request->input('is_private') === true;
-        $deptId = ($isPrivate && Auth::user()->department_id) ? Auth::user()->department_id : null;
+        
+        $deptId = null;
+        if ($isPrivate) {
+            if ($user->canManageGlobal() && $request->has('department_id')) {
+                $deptId = $request->input('department_id');
+            } else {
+                $deptId = $user->department_id;
+            }
+        }
 
         $event = Event::create([
             'title' => $validated['title'],
@@ -94,6 +104,7 @@ class EventController extends Controller
     public function update(Request $request, Event $event)
     {
         $this->requireAuth();
+        $user = Auth::user();
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -104,7 +115,19 @@ class EventController extends Controller
             'location' => 'nullable|string|max:255',
             'color' => 'required|in:blue,green,orange,red,yellow',
             'is_private' => 'nullable|boolean',
+            'department_id' => 'nullable|exists:departments,id',
         ]);
+
+        $isPrivate = $request->input('is_private') == 1 || $request->input('is_private') === true;
+        
+        $deptId = null;
+        if ($isPrivate) {
+            if ($user->canManageGlobal() && $request->has('department_id')) {
+                $deptId = $request->input('department_id');
+            } else {
+                $deptId = $user->department_id;
+            }
+        }
 
         $event->update([
             'title' => $validated['title'],
@@ -114,7 +137,7 @@ class EventController extends Controller
             'end_time' => $validated['end_time'],
             'location' => $validated['location'],
             'color' => $validated['color'],
-            'department_id' => ($request->is_private && Auth::user()->department_id) ? Auth::user()->department_id : null,
+            'department_id' => $deptId,
         ]);
 
         return response()->json(['success' => true, 'event' => $event]);
@@ -125,7 +148,7 @@ class EventController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user || !$user->isAdmin()) {
+        if (!$user || !$user->canManageGlobal()) {
             return response()->json(['error' => 'Tidak diizinkan.'], 403);
         }
 

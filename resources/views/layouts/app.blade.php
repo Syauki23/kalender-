@@ -56,6 +56,12 @@
                 <span>Kelola Akun</span>
             </a>
             @endif
+            @if(Auth::user()->canManageGlobal())
+            <a href="#" class="app-sidebar-link" id="manageDeptBtnSidebarApp">
+                <i class="fa-solid fa-folder-tree"></i>
+                <span>Data Departemen</span>
+            </a>
+            @endif
         </nav>
 
         <div class="app-sidebar-footer">
