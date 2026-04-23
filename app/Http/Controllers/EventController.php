@@ -34,6 +34,8 @@ class EventController extends Controller
                 'start' => $event->date->format('Y-m-d') . ($event->start_time ? 'T' . $event->start_time : ''),
                 'end' => $event->date->format('Y-m-d') . ($event->end_time ? 'T' . $event->end_time : ''),
                 'color' => $this->resolveColor($event->color),
+                'backgroundColor' => $this->resolveColor($event->color),
+                'borderColor' => $this->resolveColor($event->color),
                 'extendedProps' => [
                     'description' => $event->description,
                     'location' => $event->location,
@@ -64,7 +66,7 @@ class EventController extends Controller
             'start_time' => 'nullable|regex:/^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$/',
             'end_time' => 'nullable|regex:/^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$/',
             'location' => 'nullable|string|max:255',
-            'color' => 'required|in:blue,green,orange,red,yellow',
+            'color' => 'required|string|max:20',
             'is_private' => 'nullable|boolean',
             'department_id' => 'nullable|exists:departments,id',
             'wa_schedule_time' => 'nullable|date_format:Y-m-d\TH:i',
@@ -128,7 +130,7 @@ class EventController extends Controller
             'start_time' => 'nullable|regex:/^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$/',
             'end_time' => 'nullable|regex:/^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$/',
             'location' => 'nullable|string|max:255',
-            'color' => 'required|in:blue,green,orange,red,yellow',
+            'color' => 'required|string|max:20',
             'is_private' => 'nullable|boolean',
             'department_id' => 'nullable|exists:departments,id',
             'wa_schedule_time' => 'nullable|date_format:Y-m-d\TH:i',
@@ -183,14 +185,19 @@ class EventController extends Controller
     }
 
     // Helper resolve warna HEX dari label
-    private function resolveColor(string $color): string
+    private function resolveColor($color)
     {
+        if (str_starts_with($color, '#')) {
+            return $color;
+        }
+
         return match ($color) {
+            'blue' => '#6366f1',
             'green' => '#10b981',
             'orange' => '#f59e0b',
             'red' => '#ef4444',
             'yellow' => '#eab308',
-            default => '#3b82f6', // blue
+            default => '#6366f1',
         };
     }
 

@@ -96,23 +96,9 @@
 
                 <div class="form-group">
                     <label class="form-label">Warna Label</label>
-                    <div class="color-picker" id="colorPicker">
-                        <label class="color-option">
-                            <input type="radio" name="evColor" value="blue" checked>
-                            <span class="color-dot color-blue" title="Biru"></span>
-                        </label>
-                        <label class="color-option">
-                            <input type="radio" name="evColor" value="green">
-                            <span class="color-dot color-green" title="Hijau"></span>
-                        </label>
-                        <label class="color-option">
-                            <input type="radio" name="evColor" value="orange">
-                            <span class="color-dot color-orange" title="Oranye"></span>
-                        </label>
-                        <label class="color-option">
-                            <input type="radio" name="evColor" value="red">
-                            <span class="color-dot color-red" title="Merah"></span>
-                        </label>
+                    <div style="display: flex; align-items: center; gap: 1rem; background: var(--bg-surface-2); padding: 0.5rem 1rem; border-radius: 12px; border: 1px solid var(--border-color); width: fit-content;">
+                        <input type="color" id="evColor" name="evColor" value="#6366f1" style="width: 36px; height: 36px; border: none; background: none; cursor: pointer; padding: 0; border-radius: 8px;">
+                        <span style="font-size: 0.85rem; color: var(--text-secondary); font-family: monospace; font-weight: 700;" id="colorValText">#6366f1</span>
                     </div>
                 </div>
 
@@ -325,7 +311,7 @@ const IS_ADMIN = {{ $user->isAdmin() ? 'true' : 'false' }};
 const IS_EDITOR = {{ $user->isEditor() ? 'true' : 'false' }};
 const CURRENT_USER_ID = {{ $user->id }};
 const CSRF = document.querySelector('meta[name="csrf-token"]').content;
-const colorMap = { blue: '#3b82f6', green: '#10b981', orange: '#f59e0b', red: '#ef4444' };
+// No colorMap needed anymore, using hex directly
 
 // ─── Modal Helpers ────────────────────────────────────────────────────────────
 function openModal(id) {
@@ -472,12 +458,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     };
 
                     item.innerHTML = `
-                        <div class="agenda-date">
+                        <div class="agenda-date" style="background: ${ev.color};">
                             <span class="day">${day}</span>
                             <span class="dow">${dow}</span>
                         </div>
                         <div class="agenda-info">
-                            <div class="agenda-time">${time} WIB</div>
+                            <div class="agenda-time" style="color: ${ev.color};">${time} WIB</div>
                             <div class="agenda-name">${ev.title}</div>
                         </div>
                     `;
@@ -493,7 +479,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ─── Detail Modal ─────────────────────────────────────────────────────────
     function showDetailModal(event) {
         const props = event.extendedProps;
-        document.getElementById('detailColorBar').style.background = colorMap[props.color_label] || '#3b82f6';
+        document.getElementById('detailColorBar').style.background = event.backgroundColor || '#3b82f6';
         document.getElementById('detailTitle').textContent = event.title;
 
         // Handle both FC Event object and raw JSON object
@@ -547,8 +533,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('evEnd').value = event.end_time || '';
                 document.getElementById('evLocation').value = event.location || '';
                 document.getElementById('evDesc').value = event.description || '';
-                const radio = document.querySelector(`input[name="evColor"][value="${event.color}"]`);
-                if (radio) radio.checked = true;
+                document.getElementById('evColor').value = event.color || '#6366f1';
+                document.getElementById('colorValText').textContent = event.color || '#6366f1';
                 
                 const isPrivate = !!event.department_id;
                 document.getElementById('evIsPrivate').checked = isPrivate;
@@ -602,7 +588,7 @@ document.addEventListener('DOMContentLoaded', function () {
             end_time: endTime ? endTime.substring(0, 5) : null,
             location: document.getElementById('evLocation').value || null,
             description: document.getElementById('evDesc').value || null,
-            color: document.querySelector('input[name="evColor"]:checked')?.value || 'blue',
+            color: document.getElementById('evColor').value,
             is_private: document.getElementById('evIsPrivate').checked ? 1 : 0,
             department_id: document.getElementById('evDeptId') ? document.getElementById('evDeptId').value : null,
             wa_schedule_time: document.getElementById('evWaSchedule').value || null,
@@ -720,6 +706,11 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+
+    // Update hex text on color change
+    document.getElementById('evColor').addEventListener('input', function() {
+        document.getElementById('colorValText').textContent = this.value;
+    });
 
     // ─── Modal close buttons ──────────────────────────────────────────────────
     document.getElementById('eventModalClose').addEventListener('click', () => closeModal('eventModalOverlay'));
@@ -985,7 +976,8 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('evEnd').value = '';
         document.getElementById('evLocation').value = '';
         document.getElementById('evDesc').value = '';
-        document.querySelector('input[name="evColor"][value="blue"]').checked = true;
+        document.getElementById('evColor').value = '#6366f1';
+        document.getElementById('colorValText').textContent = '#6366f1';
         document.getElementById('evIsPrivate').checked = false;
         const deptGroup = document.getElementById('evDeptGroup');
         if (deptGroup) deptGroup.style.display = 'none';
