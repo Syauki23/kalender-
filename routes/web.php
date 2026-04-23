@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\WaManagerController;
 
 // ─── Public ────────────────────────────────────────────────────────────────────
 Route::get('/', function () {
@@ -28,6 +29,11 @@ Route::prefix('api')->name('api.')->group(function () {
     Route::patch('/events/{event}', [EventController::class, 'update'])->name('events.update.patch');
     Route::delete('/events/{event}', [EventController::class, 'destroy'])->name('events.destroy');
     Route::get('/whatsapp-contacts/all', [App\Http\Controllers\WhatsappContactController::class, 'getAllContacts'])->name('whatsapp-contacts.all');
+
+    // Wa Manager API
+    Route::get('/wa-manager/events', [WaManagerController::class, 'getEvents'])->name('wa-manager.events');
+    Route::get('/wa-manager/events/{id}', [WaManagerController::class, 'getEventDetails'])->name('wa-manager.details');
+    Route::post('/wa-manager/events/{id}/reminders', [WaManagerController::class, 'saveReminders'])->name('wa-manager.save');
 });
 
 // ─── Admin API (Management) ────────────────────────────────────────────────────
@@ -54,4 +60,5 @@ Route::prefix('api/admin')->name('api.admin.')->group(function () {
 // ─── Web Views for Contacts ────────────────────────────────────────────────────
 Route::middleware('auth')->group(function () {
     Route::get('/whatsapp-contacts', [App\Http\Controllers\WhatsappContactController::class, 'index'])->name('whatsapp-contacts.view');
+    Route::get('/wa-manager', [WaManagerController::class, 'index'])->name('wa-manager.view');
 });

@@ -26,8 +26,6 @@
                     <button class="btn btn-sidebar" id="addEventBtn">
                         <i class="fa-solid fa-plus"></i> Tambah Event
                     </button>
-                    @if($user->canManageGlobal())
-                    @endif
                 </div>
 
                 <!-- Agenda List Section -->
@@ -113,21 +111,6 @@
                     </p>
                 </div>
 
-                <div class="form-group" style="margin-top: 1.5rem; background: rgba(37, 211, 102, 0.05); border: 1px solid rgba(37, 211, 102, 0.2); padding: 1rem; border-radius: 12px;">
-                    <label class="form-label" style="color: #128c7e;" for="evWaSchedule"><i class="fa-brands fa-whatsapp"></i> Waktu Kirim Pengingat WA (Opsional)</label>
-                    <input type="datetime-local" id="evWaSchedule" class="form-input" style="margin-top: 0.5rem;">
-                    <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem;">
-                        <i class="fa-solid fa-circle-info"></i> Kosongkan jika tidak ingin mengirim pengingat. Jika diisi, silakan pilih kontak di bawah ini.
-                    </p>
-
-                    <!-- Contact Selection -->
-                    <div id="evWaContactsGroup" style="margin-top: 1rem; display: none;">
-                        <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-primary); text-transform: uppercase;">Pilih Penerima WhatsApp</label>
-                        <div id="waContactsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.5rem; margin-top: 0.5rem; max-height: 150px; overflow-y: auto; padding: 0.8rem; background: #fff; border-radius: 8px; border: 1px solid var(--border-color);">
-                            <div style="font-size: 0.75rem; color: var(--text-muted);">Memuat kontak...</div>
-                        </div>
-                    </div>
-                </div>
 
                 @if($user->canManageGlobal())
                 <div class="form-group" id="evDeptGroup" style="display: none; margin-left: 52px; margin-top: 0.5rem; background: var(--bg-surface-2); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-color);">
@@ -339,37 +322,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const calEl = document.getElementById('dashboardCalendar');
     let currentEventId = null;
 
-    function loadWaContacts(selectedIds = []) {
-        const list = document.getElementById('waContactsList');
-        const deptId = document.getElementById('evDeptId')?.value || '';
-        
-        list.innerHTML = '<div style="font-size: 0.75rem; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Memuat...</div>';
-        
-        let url = '/api/whatsapp-contacts/all';
-        if (deptId && document.getElementById('evIsPrivate').checked) {
-            url += '?department_id=' + deptId;
-        }
-
-        fetch(url)
-            .then(res => res.json())
-            .then(contacts => {
-                if (contacts.length === 0) {
-                    list.innerHTML = '<div style="font-size: 0.75rem; color: var(--text-muted);">Tidak ada kontak tersedia.</div>';
-                    return;
-                }
-                
-                list.innerHTML = contacts.map(c => `
-                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; cursor: pointer; padding: 0.25rem; border-radius: 4px;">
-                        <input type="checkbox" class="wa-contact-check" value="${c.id}" ${selectedIds.includes(c.id) ? 'checked' : ''}>
-                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${c.name} (${c.phone})">${c.name}</span>
-                    </label>
-                `).join('');
-            })
-            .catch(err => {
-                console.error('Gagal memuat kontak:', err);
-                list.innerHTML = '<div style="font-size: 0.75rem; color: #ef4444;">Gagal memuat kontak.</div>';
-            });
-    }
 
     const calendar = new FullCalendar.Calendar(calEl, {
         initialView: 'dayGridMonth',
@@ -383,9 +335,6 @@ document.addEventListener('DOMContentLoaded', function () {
         dateClick: function(info) {
             document.getElementById('eventForm').reset();
             document.getElementById('eventId').value = '';
-            document.getElementById('evWaSchedule').value = '';
-            document.getElementById('evWaContactsGroup').style.display = 'none';
-            document.getElementById('waContactsList').innerHTML = '';
             if(document.getElementById('evDeptGroup')) document.getElementById('evDeptGroup').style.display = 'none';
 
             document.getElementById('evDate').value = info.dateStr;
@@ -547,15 +496,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 }
 
-                document.getElementById('evWaSchedule').value = event.wa_schedule_time || '';
-                
-                if (event.wa_schedule_time) {
-                    document.getElementById('evWaContactsGroup').style.display = 'block';
-                    const selectedIds = event.whatsapp_contacts ? event.whatsapp_contacts.map(c => c.id) : [];
-                    loadWaContacts(selectedIds);
-                } else {
-                    document.getElementById('evWaContactsGroup').style.display = 'none';
-                }
 
                 document.getElementById('eventModalTitle').textContent = 'Edit Event';
                 const deleteBtn = document.getElementById('deleteEventBtn');
@@ -591,8 +531,6 @@ document.addEventListener('DOMContentLoaded', function () {
             color: document.getElementById('evColor').value,
             is_private: document.getElementById('evIsPrivate').checked ? 1 : 0,
             department_id: document.getElementById('evDeptId') ? document.getElementById('evDeptId').value : null,
-            wa_schedule_time: document.getElementById('evWaSchedule').value || null,
-            whatsapp_contact_ids: Array.from(document.querySelectorAll('.wa-contact-check:checked')).map(el => el.value),
             _token: CSRF,
         };
 
@@ -664,9 +602,6 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('addEventBtn').addEventListener('click', function() {
         document.getElementById('eventForm').reset();
         document.getElementById('eventId').value = '';
-        document.getElementById('evWaSchedule').value = '';
-        document.getElementById('evWaContactsGroup').style.display = 'none';
-        document.getElementById('waContactsList').innerHTML = '';
         if(document.getElementById('evDeptGroup')) document.getElementById('evDeptGroup').style.display = 'none';
 
         document.getElementById('evDate').value = new Date().toISOString().split('T')[0];
@@ -682,30 +617,9 @@ document.addEventListener('DOMContentLoaded', function () {
     if (evIsPrivate && evDeptGroup) {
         evIsPrivate.addEventListener('change', function() {
             evDeptGroup.style.display = this.checked ? 'block' : 'none';
-            if (document.getElementById('evWaSchedule').value) {
-                loadWaContacts();
-            }
         });
     }
 
-    // WA Schedule event listeners
-    document.getElementById('evWaSchedule').addEventListener('input', function() {
-        const group = document.getElementById('evWaContactsGroup');
-        if (this.value) {
-            group.style.display = 'block';
-            loadWaContacts();
-        } else {
-            group.style.display = 'none';
-        }
-    });
-
-    if (document.getElementById('evDeptId')) {
-        document.getElementById('evDeptId').addEventListener('change', function() {
-            if (document.getElementById('evWaSchedule').value) {
-                loadWaContacts();
-            }
-        });
-    }
 
     // Update hex text on color change
     document.getElementById('evColor').addEventListener('input', function() {
@@ -968,20 +882,6 @@ document.addEventListener('DOMContentLoaded', function () {
     @endif
 
     // ─── Reset Form ────────────────────────────────────────────────────────────
-    function resetForm() {
-        document.getElementById('eventId').value = '';
-        document.getElementById('evTitle').value = '';
-        document.getElementById('evDate').value = '';
-        document.getElementById('evStart').value = '';
-        document.getElementById('evEnd').value = '';
-        document.getElementById('evLocation').value = '';
-        document.getElementById('evDesc').value = '';
-        document.getElementById('evColor').value = '#6366f1';
-        document.getElementById('colorValText').textContent = '#6366f1';
-        document.getElementById('evIsPrivate').checked = false;
-        const deptGroup = document.getElementById('evDeptGroup');
-        if (deptGroup) deptGroup.style.display = 'none';
-    }
 });
 </script>
 @endpush

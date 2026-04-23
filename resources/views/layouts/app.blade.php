@@ -81,6 +81,10 @@
                 <i class="fa-brands fa-whatsapp"></i>
                 <span>Kontak WA (Per DPT)</span>
             </a>
+            <a href="{{ route('wa-manager.view') }}" class="app-sidebar-link {{ request()->routeIs('wa-manager.*') ? 'active' : '' }}">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Manajer Pengingat WA</span>
+            </a>
             @endif
 
         </nav>

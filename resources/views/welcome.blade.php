@@ -186,9 +186,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ─── Detail Modal ────────────────────────────────────────────────────────
     function showDetailModal(event) {
         const props = event.extendedProps;
-        const colorMap = { blue: '#3b82f6', green: '#10b981', orange: '#f59e0b', red: '#ef4444' };
-
-        document.getElementById('detailColorBar').style.background = colorMap[props.color_label] || '#3b82f6';
+        document.getElementById('detailColorBar').style.background = props.color_label || '#3b82f6';
         document.getElementById('detailTitle').textContent = event.title;
 
         // Handle both FC Event object and raw JSON object

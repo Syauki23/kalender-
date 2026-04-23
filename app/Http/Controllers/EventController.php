@@ -45,7 +45,7 @@ class EventController extends Controller
                     'creator' => $event->creator?->name,
                     'created_by' => $event->created_by,
                     'department_id' => $event->department_id,
-                    'wa_schedule_time' => $event->wa_schedule_time ? $event->wa_schedule_time->format('Y-m-d\TH:i') : null,
+
                 ],
             ];
         });
@@ -69,7 +69,7 @@ class EventController extends Controller
             'color' => 'required|string|max:20',
             'is_private' => 'nullable|boolean',
             'department_id' => 'nullable|exists:departments,id',
-            'wa_schedule_time' => 'nullable|date_format:Y-m-d\TH:i',
+
             'whatsapp_contact_ids' => 'nullable|array',
             'whatsapp_contact_ids.*' => 'exists:whatsapp_contacts,id',
         ]);
@@ -95,14 +95,14 @@ class EventController extends Controller
             'color' => $validated['color'],
             'department_id' => $deptId,
             'created_by' => Auth::id(),
-            'wa_schedule_time' => $request->input('wa_schedule_time'),
         ]);
+
 
         if ($request->has('whatsapp_contact_ids')) {
             $event->whatsappContacts()->sync($request->input('whatsapp_contact_ids'));
         }
 
-        $this->scheduleFonnteNotification($event);
+
 
         return response()->json(['success' => true, 'event' => $event], 201);
     }
@@ -133,7 +133,7 @@ class EventController extends Controller
             'color' => 'required|string|max:20',
             'is_private' => 'nullable|boolean',
             'department_id' => 'nullable|exists:departments,id',
-            'wa_schedule_time' => 'nullable|date_format:Y-m-d\TH:i',
+
             'whatsapp_contact_ids' => 'nullable|array',
             'whatsapp_contact_ids.*' => 'exists:whatsapp_contacts,id',
         ]);
@@ -158,14 +158,14 @@ class EventController extends Controller
             'location' => $validated['location'],
             'color' => $validated['color'],
             'department_id' => $deptId,
-            'wa_schedule_time' => $request->input('wa_schedule_time'),
         ]);
+
 
         if ($request->has('whatsapp_contact_ids')) {
             $event->whatsappContacts()->sync($request->input('whatsapp_contact_ids'));
         }
 
-        $this->scheduleFonnteNotification($event);
+
 
         return response()->json(['success' => true, 'event' => $event]);
     }
@@ -208,46 +208,4 @@ class EventController extends Controller
         }
     }
 
-    private function scheduleFonnteNotification(Event $event)
-    {
-        if (!$event->wa_schedule_time) return;
-
-        $token = env('FONNTE_TOKEN');
-        if (!$token) {
-            \Illuminate\Support\Facades\Log::warning("Fonnte Token tidak ditemukan di .env");
-            return;
-        }
-
-        $deptId = $event->department_id ?: $event->creator->department_id;
-        
-        // Ambil kontak yang dipilih secara spesifik untuk event ini
-        $contacts = $event->whatsappContacts;
-
-        // Jika tidak ada kontak yang dipilih secara spesifik, kembalikan (fallback ke departemen dihapus sesuai permintaan user untuk "memilih siapa saja")
-        if ($contacts->isEmpty()) {
-            \Illuminate\Support\Facades\Log::info("Event ID {$event->id} tidak memiliki kontak WhatsApp terpilih.");
-            return;
-        }
-
-        $phones = $contacts->pluck('phone')->toArray();
-        $target = implode(',', $phones);
-
-        $message = "*PENGINGAT KEGIATAN*\n\nYth. Bapak/Ibu,\n\nBerikut adalah pengingat untuk agenda mendatang:\n\n📌 *Agenda:* {$event->title}\n📅 *Tanggal:* " . $event->date->format('d M Y') . "\n⏰ *Waktu:* " . ($event->start_time ? substr($event->start_time, 0, 5) : 'TBA') . " WIB\n📍 *Lokasi:* " . ($event->location ?: 'TBA') . "\n\nMohon kehadiran dan kerja samanya. Terima kasih.\n\n_Sistem Notifikasi Kalender_";
-
-        $timestamp = $event->wa_schedule_time->timestamp;
-
-        try {
-            $response = \Illuminate\Support\Facades\Http::withHeaders([
-                'Authorization' => $token,
-            ])->post('https://api.fonnte.com/send', [
-                'target'  => $target,
-                'message' => $message,
-                'schedule' => $timestamp
-            ]);
-
-            \Illuminate\Support\Facades\Log::info("Fonnte API Response untuk Event {$event->id}: " . $response->body());
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("Fonnte Schedule Error: " . $e->getMessage());
-        }
-    }
 }

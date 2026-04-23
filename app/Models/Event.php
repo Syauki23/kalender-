@@ -19,12 +19,10 @@ class Event extends Model
         'color',
         'department_id',
         'created_by',
-        'wa_schedule_time',
     ];
 
     protected $casts = [
         'date' => 'date',
-        'wa_schedule_time' => 'datetime',
     ];
 
     public function department()
@@ -39,6 +37,12 @@ class Event extends Model
 
     public function whatsappContacts()
     {
-        return $this->belongsToMany(WhatsappContact::class, 'event_whatsapp_contact');
+        return $this->belongsToMany(WhatsappContact::class, 'event_whatsapp_contact', 'event_id', 'whatsapp_contact_id');
+    }
+
+    // Relasi ke reminders
+    public function reminders()
+    {
+        return $this->hasMany(EventReminder::class);
     }
 }
