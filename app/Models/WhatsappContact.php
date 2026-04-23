@@ -19,4 +19,9 @@ class WhatsappContact extends Model
     {
         return $this->belongsTo(Department::class);
     }
+
+    public function events()
+    {
+        return $this->belongsToMany(Event::class, 'event_whatsapp_contact');
+    }
 }

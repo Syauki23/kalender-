@@ -27,6 +27,7 @@ Route::prefix('api')->name('api.')->group(function () {
     Route::put('/events/{event}',   [EventController::class, 'update'])->name('events.update');
     Route::patch('/events/{event}', [EventController::class, 'update'])->name('events.update.patch');
     Route::delete('/events/{event}', [EventController::class, 'destroy'])->name('events.destroy');
+    Route::get('/whatsapp-contacts/all', [App\Http\Controllers\WhatsappContactController::class, 'getAllContacts'])->name('whatsapp-contacts.all');
 });
 
 // ─── Admin API (Management) ────────────────────────────────────────────────────
@@ -34,6 +35,7 @@ Route::prefix('api/admin')->name('api.admin.')->group(function () {
     // Departments
     Route::get('/departments',           [AdminController::class, 'departments'])->name('departments.index');
     Route::post('/departments',          [AdminController::class, 'addDepartment'])->name('departments.store');
+    Route::put('/departments/{department}', [AdminController::class, 'updateDepartment'])->name('departments.update');
     Route::delete('/departments/{department}', [AdminController::class, 'removeDepartment'])->name('departments.destroy');
 
     // Users

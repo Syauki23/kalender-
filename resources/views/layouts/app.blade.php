@@ -71,6 +71,10 @@
                 <i class="fa-solid fa-users-gear"></i>
                 <span>Kelola Akun</span>
             </a>
+            <a href="#" class="app-sidebar-link" id="manageDeptsBtnSidebar">
+                <i class="fa-solid fa-building-user"></i>
+                <span>Master Departemen</span>
+            </a>
             @endif
             @if(Auth::user()->canManageGlobal())
             <a href="{{ route('whatsapp-contacts.view') }}" class="app-sidebar-link {{ request()->routeIs('whatsapp-contacts.*') ? 'active' : '' }}">

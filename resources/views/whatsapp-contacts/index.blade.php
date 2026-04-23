@@ -130,7 +130,7 @@ function loadContacts() {
     const list = document.getElementById('contactList');
     list.innerHTML = '<div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> Memuat...</div>';
     
-    fetch('/departments/' + currentDeptId + '/whatsapp-contacts')
+    fetch('/api/admin/departments/' + currentDeptId + '/whatsapp-contacts')
         .then(r => r.json())
         .then(data => {
             if(data.length === 0) {
@@ -201,7 +201,7 @@ document.getElementById('contactSaveBtn').addEventListener('click', () => {
         _token: CSRF
     };
 
-    const url = id ? '/whatsapp-contacts/' + id : '/whatsapp-contacts';
+    const url = id ? '/api/admin/whatsapp-contacts/' + id : '/api/admin/whatsapp-contacts';
     const method = id ? 'PUT' : 'POST';
     
     document.getElementById('saveContactText').style.display = 'none';
@@ -236,7 +236,7 @@ document.getElementById('contactSaveBtn').addEventListener('click', () => {
 window.deleteContact = function(id) {
     if(!confirm('Hapus kontak WA ini?')) return;
     
-    fetch('/whatsapp-contacts/' + id, {
+    fetch('/api/admin/whatsapp-contacts/' + id, {
         method: 'DELETE',
         headers: { 'X-CSRF-TOKEN': CSRF }
     })

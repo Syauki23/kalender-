@@ -36,4 +36,9 @@ class Event extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    public function whatsappContacts()
+    {
+        return $this->belongsToMany(WhatsappContact::class, 'event_whatsapp_contact');
+    }
 }

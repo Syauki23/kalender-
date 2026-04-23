@@ -58,6 +58,21 @@ class AdminController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function updateDepartment(Request $request, Department $department)
+    {
+        $this->requireGlobal();
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:departments,name,' . $department->id,
+        ]);
+
+        $department->update([
+            'name' => $validated['name'],
+            'slug' => Str::slug($validated['name']),
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
     // ─── USERS ───────────────────────────────────────────────────────────────
 
     public function users()

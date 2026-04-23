@@ -131,8 +131,16 @@
                     <label class="form-label" style="color: #128c7e;" for="evWaSchedule"><i class="fa-brands fa-whatsapp"></i> Waktu Kirim Pengingat WA (Opsional)</label>
                     <input type="datetime-local" id="evWaSchedule" class="form-input" style="margin-top: 0.5rem;">
                     <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem;">
-                        <i class="fa-solid fa-circle-info"></i> Kosongkan jika tidak ingin mengirim pengingat. Notifikasi akan dijadwalkan otomatis oleh server Fonnte ke kontak departemen terkait.
+                        <i class="fa-solid fa-circle-info"></i> Kosongkan jika tidak ingin mengirim pengingat. Jika diisi, silakan pilih kontak di bawah ini.
                     </p>
+
+                    <!-- Contact Selection -->
+                    <div id="evWaContactsGroup" style="margin-top: 1rem; display: none;">
+                        <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-primary); text-transform: uppercase;">Pilih Penerima WhatsApp</label>
+                        <div id="waContactsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.5rem; margin-top: 0.5rem; max-height: 150px; overflow-y: auto; padding: 0.8rem; background: #fff; border-radius: 8px; border: 1px solid var(--border-color);">
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">Memuat kontak...</div>
+                        </div>
+                    </div>
                 </div>
 
                 @if($user->canManageGlobal())
@@ -273,25 +281,35 @@
                 </form>
             </div>
 
-            <!-- Department Master -->
-            <div class="section-card">
-                <h3 class="section-card-title">Data Master Departemen</h3>
-                <form id="addDeptForm" style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
-                    <input type="text" id="deptName" class="form-input" placeholder="Nama departemen baru..." required>
-                    <button type="submit" class="btn btn-primary btn-sm" id="addDeptBtn">
-                        <i class="fa-solid fa-plus"></i> Tambah
-                    </button>
-                </form>
-                <div id="deptList" class="user-list" style="max-height: 200px; overflow-y: auto;">
-                    <!-- Loaded via JS -->
-                </div>
-            </div>
 
             <!-- Editor List -->
             <div class="section-card">
                 <h3 class="section-card-title">Daftar Editor</h3>
                 <div id="editorList" class="user-list">
                     <div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> Memuat...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="deptsModalOverlay" role="dialog" aria-modal="true" aria-labelledby="deptsModalTitle">
+    <div class="modal" id="deptsModal">
+        <div class="modal-header">
+            <h2 class="modal-title" id="deptsModalTitle"><i class="fa-solid fa-building-user"></i> Master Departemen</h2>
+            <button class="modal-close" id="deptsModalClose" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="section-card">
+                <h3 class="section-card-title">Tambah / Edit Nama Departemen</h3>
+                <form id="addDeptForm" style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                    <input type="text" id="deptName" class="form-input" placeholder="Nama departemen baru..." required>
+                    <button type="submit" class="btn btn-primary btn-sm" id="addDeptBtn">
+                        <i class="fa-solid fa-plus"></i> Simpan
+                    </button>
+                </form>
+                <div id="deptList" class="user-list" style="max-height: 400px; overflow-y: auto;">
+                    <!-- Loaded via JS -->
                 </div>
             </div>
         </div>
@@ -335,6 +353,38 @@ document.addEventListener('DOMContentLoaded', function () {
     const calEl = document.getElementById('dashboardCalendar');
     let currentEventId = null;
 
+    function loadWaContacts(selectedIds = []) {
+        const list = document.getElementById('waContactsList');
+        const deptId = document.getElementById('evDeptId')?.value || '';
+        
+        list.innerHTML = '<div style="font-size: 0.75rem; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Memuat...</div>';
+        
+        let url = '/api/whatsapp-contacts/all';
+        if (deptId && document.getElementById('evIsPrivate').checked) {
+            url += '?department_id=' + deptId;
+        }
+
+        fetch(url)
+            .then(res => res.json())
+            .then(contacts => {
+                if (contacts.length === 0) {
+                    list.innerHTML = '<div style="font-size: 0.75rem; color: var(--text-muted);">Tidak ada kontak tersedia.</div>';
+                    return;
+                }
+                
+                list.innerHTML = contacts.map(c => `
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; cursor: pointer; padding: 0.25rem; border-radius: 4px;">
+                        <input type="checkbox" class="wa-contact-check" value="${c.id}" ${selectedIds.includes(c.id) ? 'checked' : ''}>
+                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${c.name} (${c.phone})">${c.name}</span>
+                    </label>
+                `).join('');
+            })
+            .catch(err => {
+                console.error('Gagal memuat kontak:', err);
+                list.innerHTML = '<div style="font-size: 0.75rem; color: #ef4444;">Gagal memuat kontak.</div>';
+            });
+    }
+
     const calendar = new FullCalendar.Calendar(calEl, {
         initialView: 'dayGridMonth',
         locale: 'id',
@@ -348,6 +398,8 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('eventForm').reset();
             document.getElementById('eventId').value = '';
             document.getElementById('evWaSchedule').value = '';
+            document.getElementById('evWaContactsGroup').style.display = 'none';
+            document.getElementById('waContactsList').innerHTML = '';
             if(document.getElementById('evDeptGroup')) document.getElementById('evDeptGroup').style.display = 'none';
 
             document.getElementById('evDate').value = info.dateStr;
@@ -510,6 +562,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 document.getElementById('evWaSchedule').value = event.wa_schedule_time || '';
+                
+                if (event.wa_schedule_time) {
+                    document.getElementById('evWaContactsGroup').style.display = 'block';
+                    const selectedIds = event.whatsapp_contacts ? event.whatsapp_contacts.map(c => c.id) : [];
+                    loadWaContacts(selectedIds);
+                } else {
+                    document.getElementById('evWaContactsGroup').style.display = 'none';
+                }
 
                 document.getElementById('eventModalTitle').textContent = 'Edit Event';
                 const deleteBtn = document.getElementById('deleteEventBtn');
@@ -546,6 +606,7 @@ document.addEventListener('DOMContentLoaded', function () {
             is_private: document.getElementById('evIsPrivate').checked ? 1 : 0,
             department_id: document.getElementById('evDeptId') ? document.getElementById('evDeptId').value : null,
             wa_schedule_time: document.getElementById('evWaSchedule').value || null,
+            whatsapp_contact_ids: Array.from(document.querySelectorAll('.wa-contact-check:checked')).map(el => el.value),
             _token: CSRF,
         };
 
@@ -618,6 +679,8 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('eventForm').reset();
         document.getElementById('eventId').value = '';
         document.getElementById('evWaSchedule').value = '';
+        document.getElementById('evWaContactsGroup').style.display = 'none';
+        document.getElementById('waContactsList').innerHTML = '';
         if(document.getElementById('evDeptGroup')) document.getElementById('evDeptGroup').style.display = 'none';
 
         document.getElementById('evDate').value = new Date().toISOString().split('T')[0];
@@ -633,6 +696,28 @@ document.addEventListener('DOMContentLoaded', function () {
     if (evIsPrivate && evDeptGroup) {
         evIsPrivate.addEventListener('change', function() {
             evDeptGroup.style.display = this.checked ? 'block' : 'none';
+            if (document.getElementById('evWaSchedule').value) {
+                loadWaContacts();
+            }
+        });
+    }
+
+    // WA Schedule event listeners
+    document.getElementById('evWaSchedule').addEventListener('input', function() {
+        const group = document.getElementById('evWaContactsGroup');
+        if (this.value) {
+            group.style.display = 'block';
+            loadWaContacts();
+        } else {
+            group.style.display = 'none';
+        }
+    });
+
+    if (document.getElementById('evDeptId')) {
+        document.getElementById('evDeptId').addEventListener('change', function() {
+            if (document.getElementById('evWaSchedule').value) {
+                loadWaContacts();
+            }
         });
     }
 
@@ -657,7 +742,19 @@ document.addEventListener('DOMContentLoaded', function () {
     if (manageBtn) manageBtn.addEventListener('click', openUserManagement);
     if (manageBtnSidebar) manageBtnSidebar.addEventListener('click', openUserManagement);
 
+    const manageDeptsBtnSidebar = document.getElementById('manageDeptsBtnSidebar');
+    if (manageDeptsBtnSidebar) {
+        manageDeptsBtnSidebar.addEventListener('click', function(e) {
+            e.preventDefault();
+            loadDepartments();
+            openModal('deptsModalOverlay');
+        });
+    }
+
     document.getElementById('usersModalClose').addEventListener('click', () => closeModal('usersModalOverlay'));
+    if (document.getElementById('deptsModalClose')) {
+        document.getElementById('deptsModalClose').addEventListener('click', () => closeModal('deptsModalOverlay'));
+    }
 
     // Auto-fill email from username
     document.getElementById('edUsername').addEventListener('input', function() {
@@ -718,9 +815,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 list.innerHTML = depts.map(d => `
                     <div class="user-list-item" style="padding: 0.5rem 1rem;">
                         <div class="user-list-info"><strong>${d.name}</strong></div>
-                        <button class="btn btn-danger btn-xs" onclick="removeDepartment(${d.id})">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
+                        <div style="display: flex; gap: 0.4rem;">
+                            <button class="btn btn-outline btn-xs" title="Edit Nama" onclick="editDepartment(${d.id}, '${d.name}')">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button class="btn btn-danger btn-xs" title="Hapus" onclick="removeDepartment(${d.id})">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
                     </div>
                 `).join('');
 
@@ -743,6 +845,22 @@ document.addEventListener('DOMContentLoaded', function () {
             if(data.success) loadDepartments();
             else alert(data.error || 'Gagal menghapus departemen.');
         });
+    };
+
+    window.editDepartment = function(id, currentName) {
+        const newName = prompt('Ubah nama departemen:', currentName);
+        if (newName && newName !== currentName) {
+            fetch('/api/admin/departments/' + id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+                body: JSON.stringify({ name: newName })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if(data.success) loadDepartments();
+                else alert(data.error || 'Gagal mengubah departemen.');
+            });
+        }
     };
 
     document.getElementById('addDeptForm').addEventListener('submit', function(e) {

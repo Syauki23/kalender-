@@ -63,4 +63,25 @@ class WhatsappContactController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    // Untuk pilihan di modal event
+    public function getAllContacts(Request $request)
+    {
+        if (!Auth::check()) return response()->json([], 401);
+        
+        $user = Auth::user();
+        $query = WhatsappContact::query();
+
+        // Jika bukan admin/editor, hanya lihat kontak departemen sendiri
+        if (!$user->canManageGlobal()) {
+            $query->where('department_id', $user->department_id);
+        } else {
+            // Admin/Editor bisa filter lewat ?department_id=...
+            if ($request->has('department_id')) {
+                $query->where('department_id', $request->department_id);
+            }
+        }
+
+        return response()->json($query->orderBy('name')->get());
+    }
 }
