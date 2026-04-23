@@ -964,6 +964,16 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('addEditorBtn').innerHTML = '<i class="fa-solid fa-user-plus"></i> Tambah Editor';
         document.getElementById('cancelEditBtn').style.display = 'none';
     };
+
+    // Auto-open modals via URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const modalParam = urlParams.get('modal');
+    if (modalParam === 'users') {
+        openUserManagement();
+    } else if (modalParam === 'depts') {
+        loadDepartments();
+        openModal('deptsModalOverlay');
+    }
     @endif
 
     // ─── Reset Form ────────────────────────────────────────────────────────────

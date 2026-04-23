@@ -225,7 +225,7 @@ class EventController extends Controller
         $phones = $contacts->pluck('phone')->toArray();
         $target = implode(',', $phones);
 
-        $message = "Halo, Pengingat Acara:\n\n*{$event->title}*\nTanggal: " . $event->date->format('d M Y') . "\nWaktu: " . ($event->start_time ? substr($event->start_time, 0, 5) : 'TBA') . "\nLokasi: " . ($event->location ?: 'TBA') . "\n\nTerima kasih.";
+        $message = "*PENGINGAT KEGIATAN*\n\nYth. Bapak/Ibu,\n\nBerikut adalah pengingat untuk agenda mendatang:\n\n📌 *Agenda:* {$event->title}\n📅 *Tanggal:* " . $event->date->format('d M Y') . "\n⏰ *Waktu:* " . ($event->start_time ? substr($event->start_time, 0, 5) : 'TBA') . " WIB\n📍 *Lokasi:* " . ($event->location ?: 'TBA') . "\n\nMohon kehadiran dan kerja samanya. Terima kasih.\n\n_Sistem Notifikasi Kalender_";
 
         $timestamp = $event->wa_schedule_time->timestamp;
 

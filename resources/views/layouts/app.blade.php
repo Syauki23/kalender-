@@ -67,11 +67,11 @@
                 <span>Dashboard</span>
             </a>
             @if(Auth::user()->isAdmin())
-            <a href="#" class="app-sidebar-link" id="manageUsersBtnSidebar">
+            <a href="{{ route('dashboard') }}?modal=users" class="app-sidebar-link" id="manageUsersBtnSidebar">
                 <i class="fa-solid fa-users-gear"></i>
                 <span>Kelola Akun</span>
             </a>
-            <a href="#" class="app-sidebar-link" id="manageDeptsBtnSidebar">
+            <a href="{{ route('dashboard') }}?modal=depts" class="app-sidebar-link" id="manageDeptsBtnSidebar">
                 <i class="fa-solid fa-building-user"></i>
                 <span>Master Departemen</span>
             </a>
