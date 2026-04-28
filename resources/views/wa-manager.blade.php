@@ -154,7 +154,92 @@
         margin-bottom: 1rem;
         color: var(--border-color);
     }
+
+    /* Select2 Premium Styling */
+    .select2-container--default .select2-selection--multiple {
+        background-color: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        min-height: 50px;
+        padding: 4px 8px;
+        transition: all 0.3s;
+    }
+
+    .select2-container--default.select2-container--focus .select2-selection--multiple {
+        border-color: #128c7e;
+        box-shadow: 0 0 0 4px rgba(18, 140, 126, 0.1);
+    }
+
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        background-color: #128c7e;
+        border: none;
+        color: white;
+        border-radius: 8px;
+        padding: 4px 10px 4px 24px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-top: 6px;
+        position: relative;
+    }
+
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+        color: rgba(255, 255, 255, 0.8);
+        border: none;
+        left: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 14px;
+    }
+
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+        background: transparent;
+        color: white;
+    }
+
+    .select2-dropdown {
+        background-color: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        overflow: hidden;
+        z-index: 1060;
+    }
+
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: #128c7e;
+    }
+
+    .select2-results__option {
+        padding: 10px 15px;
+        font-size: 0.9rem;
+        color: var(--text-primary);
+    }
+
+    .select2-results__group {
+        background: var(--bg-surface-2);
+        color: var(--text-muted);
+        font-weight: 800;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 8px 15px;
+    }
+
+    .select2-container--default .select2-search--inline .select2-search__field {
+        color: var(--text-primary);
+        font-family: inherit;
+    }
+
+    .select2-container--default .select2-results__option[aria-selected=true] {
+        background-color: var(--bg-surface-2);
+        color: var(--text-muted);
+    }
+
+    [data-theme="dark"] .select2-results__option--selectable {
+        color: #e2e8f0;
+    }
 </style>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 @endpush
 
 @section('content')
@@ -199,6 +284,8 @@
 @endsection
 
 @push('scripts')
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const CSRF = document.querySelector('meta[name="csrf-token"]').content;
@@ -293,30 +380,42 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
 
-        // 1. Pilih Orang
+        // 1. Pilih Orang (Grouped by Dept)
         html += `
             <div class="detail-card">
                 <div class="section-label"><i class="fa-solid fa-users"></i> 1. Pilih Penerima WhatsApp</div>
-                <div class="contact-grid">
+                <div style="margin-bottom: 0.5rem;">
+                    <select id="contactSelect" multiple="multiple" style="width: 100%;">
         `;
         
         if (allContacts.length === 0) {
-            html += `<p style="font-size: 0.85rem; color: #ef4444;">Belum ada kontak terdaftar di sistem.</p>`;
+            html += `<option disabled>Belum ada kontak terdaftar</option>`;
         } else {
+            // Group contacts by department
+            const grouped = {};
             allContacts.forEach(c => {
-                const isChecked = selectedContactIds.includes(c.id) ? 'checked' : '';
-                html += `
-                    <label class="contact-card">
-                        <input type="checkbox" class="contact-checkbox" value="${c.id}" ${isChecked}>
-                        <div style="overflow: hidden;">
-                            <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${c.name}</div>
-                            <div style="font-size: 0.75rem; color: var(--text-muted);">${c.phone}</div>
-                        </div>
-                    </label>
-                `;
+                const deptName = c.department ? c.department.name : 'Tanpa Departemen';
+                if (!grouped[deptName]) grouped[deptName] = [];
+                grouped[deptName].push(c);
+            });
+
+            Object.keys(grouped).forEach(deptName => {
+                html += `<optgroup label="${deptName}">`;
+                grouped[deptName].forEach(c => {
+                    const isSelected = selectedContactIds.includes(c.id) ? 'selected' : '';
+                    html += `<option value="${c.id}" ${isSelected}>${c.name} (${c.phone})</option>`;
+                });
+                html += `</optgroup>`;
             });
         }
-        html += `</div></div>`;
+        html += `
+                    </select>
+                </div>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+                    <i class="fa-solid fa-circle-info"></i> Ketik nama atau departemen untuk mencari.
+                </p>
+            </div>
+        `;
 
         // 2. Waktu Pengingat
         html += `
@@ -347,6 +446,15 @@ document.addEventListener('DOMContentLoaded', function() {
         html += `</div></div>`;
 
         configContainer.innerHTML = html;
+
+        // Initialize Select2 after rendering
+        $('#contactSelect').select2({
+            placeholder: "Cari penerima...",
+            allowClear: true,
+            language: {
+                noResults: function() { return "Kontak tidak ditemukan"; }
+            }
+        });
     }
 
     window.addReminderRow = function() {
@@ -386,7 +494,7 @@ document.addEventListener('DOMContentLoaded', function() {
     btnSaveConfig.addEventListener('click', function() {
         if (!activeEventId) return;
 
-        const selectedContacts = Array.from(document.querySelectorAll('.contact-checkbox:checked')).map(cb => cb.value);
+        const selectedContacts = $('#contactSelect').val() || [];
         const reminderInputs = Array.from(document.querySelectorAll('.reminder-input'));
         
         // Validasi input

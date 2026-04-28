@@ -82,6 +82,6 @@ class WhatsappContactController extends Controller
             }
         }
 
-        return response()->json($query->orderBy('name')->get());
+        return response()->json($query->with('department')->orderBy('department_id')->orderBy('name')->get());
     }
 }
