@@ -89,7 +89,11 @@ class WaManagerController extends Controller
         $phones = $contacts->pluck('phone')->toArray();
         $target = implode(',', $phones);
 
-        $message = "*PENGINGAT KEGIATAN*\n\nYth. Bapak/Ibu,\n\nBerikut adalah pengingat untuk agenda mendatang:\n\n📌 *Agenda:* {$event->title}\n📅 *Tanggal:* " . $event->date->format('d M Y') . "\n⏰ *Waktu:* " . ($event->start_time ? substr($event->start_time, 0, 5) : 'TBA') . " WIB\n📍 *Lokasi:* " . ($event->location ?: 'TBA') . "\n\nMohon kehadiran dan kerja samanya. Terima kasih.\n\n_Sistem Notifikasi Kalender_";
+        $startTime = $event->start_time ? substr($event->start_time, 0, 5) : 'TBA';
+        $endTime = $event->end_time ? substr($event->end_time, 0, 5) : null;
+        $waktu = $startTime . ($endTime ? " - {$endTime}" : "") . " WIB";
+
+        $message = "*PENGINGAT KEGIATAN*\n\nYth. Bapak/Ibu,\n\nBerikut adalah pengingat untuk agenda mendatang:\n\n📌 *Agenda:* {$event->title}\n📅 *Tanggal:* " . $event->date->format('d M Y') . "\n⏰ *Waktu:* {$waktu}\n📍 *Lokasi:* " . ($event->location ?: 'TBA') . "\n\nMohon kehadiran dan kerja samanya. Terima kasih.\n\n_Sistem Notifikasi Kalender_";
 
         if (!empty($validated['reminders'])) {
             foreach ($validated['reminders'] as $timeStr) {
